@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.shape.Line?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.text.Text?>
+<?import javafx.geometry.Insets?>
+
+<VBox alignment="CENTER" spacing="20" style="-fx-background-color: #e0e0e0;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.scorebrain.grokrules.ScoreboardController">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+    
+    <!-- Scoreboard Area -->
+    <Label text="Scoreboard" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
+    <Label fx:id="timerLabel" text="01:00" style="-fx-font-size: 16px; -fx-text-fill: #333333;"/>
+    <HBox alignment="CENTER_RIGHT" style="-fx-pref-width: 400;">
+        <Text fx:id="hornSymbol" text="H" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #333333;" visible="false"/>
+    </HBox>
+    
+    <Line startX="0" endX="400" strokeWidth="4" stroke="#333333"/>
+    
+    <!-- Controller Area -->
+    <VBox spacing="5" alignment="CENTER" style="-fx-pref-height: 60;">
+        <Label fx:id="lcdLine1" text="1:00 2:00 3:00 1" style="-fx-font-family: 'Courier New'; -fx-font-size: 14px; -fx-text-fill: #000000; -fx-background-color: #d3d3d3; -fx-pref-width: 240; -fx-alignment: CENTER;"/>
+        <Label fx:id="lcdLine2" text="                " style="-fx-font-family: 'Courier New'; -fx-font-size: 14px; -fx-text-fill: #000000; -fx-background-color: #d3d3d3; -fx-pref-width: 240; -fx-alignment: CENTER;"/>
+    </VBox>
+    
+    <HBox spacing="20" alignment="CENTER">
+        <VBox spacing="10" alignment="CENTER_LEFT">
+            <Button fx:id="buttonPlusOne" text="+1" onAction="#handlePlusOne" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
+            <Button fx:id="buttonMinusOne" text="-1" onAction="#handleMinusOne" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
+            <Button fx:id="buttonSet" text="SET" onAction="#handleSet" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
+            <VBox spacing="5" alignment="CENTER_LEFT">
+                <HBox spacing="5" alignment="CENTER">
+                    <Button fx:id="buttonStartStop" text="START / STOP" onAction="#handleStartStop" style="-fx-font-size: 16px; -fx-pref-width: 100; -fx-pref-height: 65; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-border-radius: 5; -fx-wrap-text: true; -fx-alignment: CENTER;"/>
+                    <Circle fx:id="runningIndicator" radius="8" fill="#696969"/>
+                </HBox>
+                <Button fx:id="buttonHorn" text="HORN" onAction="#handleHorn" style="-fx-font-size: 16px; -fx-pref-width: 100; -fx-pref-height: 50; -fx-background-color: #ff4500; -fx-text-fill: white; -fx-border-radius: 5;"/>
+                <Button fx:id="buttonNextTimer" text="NEXT TIMER" onAction="#handleNextTimer" style="-fx-font-size: 16px; -fx-pref-width: 100; -fx-pref-height: 50; -fx-background-color: #4682b4; -fx-text-fill: white; -fx-border-radius: 5;"/>
+            </VBox>
+        </VBox>
+        
+        <GridPane hgap="10" vgap="10" alignment="CENTER">
+            <Button text="7" GridPane.rowIndex="0" GridPane.columnIndex="0" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
+            <Button text="8" GridPane.rowIndex="0" GridPane.columnIndex="1" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
+            <Button text="9" GridPane.rowIndex="0" GridPane.columnIndex="2" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
+            
+            <Button text="4" GridPane.rowIndex="1" GridPane.columnIndex="0" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
+            <Button text="5" GridPane.rowIndex="1" GridPane.columnIndex="1" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
+            <Button text="6" GridPane.rowIndex="1" GridPane.columnIndex="2" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
+            
+            <Button text="1" GridPane.rowIndex="2" GridPane.columnIndex="0" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
+            <Button text="2" GridPane.rowIndex="2" GridPane.columnIndex="1" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
+            <Button text="3" GridPane.rowIndex="2" GridPane.columnIndex="2" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
+            
+            <Button text="0" GridPane.rowIndex="3" GridPane.columnIndex="1" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
+        </GridPane>
+        
+        <VBox spacing="10" alignment="CENTER">
+            <Button fx:id="buttonEnter" text="ENTER" onAction="#handleEnter" style="-fx-font-size: 16px; -fx-pref-width: 70; -fx-pref-height: 50; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-border-radius: 5;"/>
+            <Button fx:id="buttonBackspace" text="BACK" onAction="#handleBackClick" style="-fx-font-size: 16px; -fx-pref-width: 70; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
+        </VBox>
+    </HBox>
+</VBox>
