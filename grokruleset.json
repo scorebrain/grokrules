@@ -1,101 +1,46 @@
 {
-    "elements": [
-        {
-		  "type": "ScoreTimer",
-		  "id": "timerOne",
-		  "initialSeconds": 60,
-		  "isCountingDown": true,
-		  "methods": [
-			{"name": "increment", "type": "simple"},
-			{"name": "decrement", "type": "simple"},
-			{"name": "set", "type": "input"},
-			{"name": "startstop", "type": "simple"}
-		  ],
-		  "constraints": [
-			{
-			  "methods": ["increment", "decrement", "set"],
-			  "when": {"isRunning": false}
-			}
-		  ],
-		  "flashZoneTrigger": 10,
-		  "flashPattern": 1
-		},
-        {
-		  "type": "ScoreTimer",
-		  "id": "timerTwo",
-		  "initialSeconds": 120,
-		  "isCountingDown": true,
-		  "methods": [
-			{"name": "increment", "type": "simple"},
-			{"name": "decrement", "type": "simple"},
-			{"name": "set", "type": "input"},
-			{"name": "startstop", "type": "simple"}
-		  ],
-		  "constraints": [
-			{
-			  "methods": ["increment", "decrement", "set"],
-			  "when": {"isRunning": false}
-			}
-		  ],
-		  "flashZoneTrigger": 15,
-		  "flashPattern": 2
-		},
-        {
-		  "type": "ScoreTimer",
-		  "id": "timerThree",
-		  "initialSeconds": 180,
-		  "isCountingDown": true,
-		  "methods": [
-			{"name": "increment", "type": "simple"},
-			{"name": "decrement", "type": "simple"},
-			{"name": "set", "type": "input"},
-			{"name": "startstop", "type": "simple"}
-		  ],
-		  "constraints": [
-			{
-			  "methods": ["increment", "decrement", "set"],
-			  "when": {"isRunning": false}
-			}
-		  ],
-		  "flashZoneTrigger": 20,
-		  "flashPattern": 3
-		},
-        {
-            "type": "ScoreIndicator",
-            "id": "timerOneSelected",
-            "initialValue": true
-        },
-        {
-            "type": "ScoreIndicator",
-            "id": "timerTwoSelected",
-            "initialValue": false
-        },
-        {
-            "type": "ScoreIndicator",
-            "id": "timerThreeSelected",
-            "initialValue": false
-        },
-        {
-            "type": "ScoreIndicator",
-            "id": "timerOneHorn",
-            "initialValue": false,
-            "currentPattern": 1
-        },
-        {
-            "type": "ScoreIndicator",
-            "id": "timerTwoHorn",
-            "initialValue": false,
-            "currentPattern": 2
-        },
-        {
-            "type": "ScoreIndicator",
-            "id": "timerThreeHorn",
-            "initialValue": false,
-            "currentPattern": 3
-        }
-    ],
-    "messages": {
-        "running": "Timer is running!",
-        "stopped": "Timer stopped."
+  "elements": [
+    {
+      "type": "ScoreTimer",
+      "id": "timerOne",
+      "initialSeconds": 60,
+      "thresholds": [10]
+    },
+    {
+      "type": "ScoreIndicator",
+      "id": "timerOne_Horn",
+      "initialValue": false,
+      "observedTimerId": "timerOne",
+      "triggerEvent": "expired",
+      "pattern": "flash:500"
+    },
+    {
+      "type": "ScoreTimer",
+      "id": "timerTwo",
+      "initialSeconds": 120,
+      "thresholds": [20]
+    },
+    {
+      "type": "ScoreIndicator",
+      "id": "timerTwo_Horn",
+      "initialValue": false,
+      "observedTimerId": "timerTwo",
+      "triggerEvent": "threshold:20",
+      "pattern": "flash:300"
+    },
+    {
+      "type": "ScoreTimer",
+      "id": "timerThree",
+      "initialSeconds": 30,
+      "thresholds": [5]
+    },
+    {
+      "type": "ScoreIndicator",
+      "id": "timerThree_Horn",
+      "initialValue": false,
+      "observedTimerId": "timerThree",
+      "triggerEvent": "expired",
+      "pattern": "flash:700"
     }
+  ]
 }

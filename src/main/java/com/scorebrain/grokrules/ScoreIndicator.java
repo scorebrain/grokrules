@@ -5,22 +5,20 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
 
-public class ScoreIndicator implements ScoreElement {
+public class ScoreIndicator implements ScoreElement, TimerObserver {
     private String id;
     private boolean currentValue;
-    private int currentPattern; // 1 = single, 2 = double beep, 3 = triple beep
-    private Timeline patternTimeline;
-	private boolean patternRunning = false; // Tracks if a pattern is active
-
-    public ScoreIndicator() {
-        this.patternTimeline = new Timeline();
-    }
+    private String observedTimerId;
+    private String triggerEvent; // e.g., "started", "expired", "threshold:10"
+    private String pattern; // e.g., "flash:500" for 500ms flashing
 
     @Override
     public void initialize(JsonObject config) {
         this.id = config.get("id").getAsString();
         this.currentValue = config.has("initialValue") ? config.get("initialValue").getAsBoolean() : false;
-        this.currentPattern = config.has("currentPattern") ? config.get("currentPattern").getAsInt() : 0;
+        this.observedTimerId = config.has("observedTimerId") ? config.get("observedTimerId").getAsString() : null;
+        this.triggerEvent = config.has("triggerEvent") ? config.get("triggerEvent").getAsString() : null;
+        this.pattern = config.has("pattern") ? config.get("pattern").getAsString() : null;
     }
 
     @Override
@@ -29,75 +27,72 @@ public class ScoreIndicator implements ScoreElement {
     }
 
     @Override
-    public void reset() {
-        currentValue = false;
-        patternTimeline.stop();
+    public void onTimerStarted(String timerId) {
+        if (timerId.equals(observedTimerId) && "started".equals(triggerEvent)) {
+            setCurrentValue(true);
+        }
     }
 
     @Override
-    public String getDisplayValue() {
-        return currentValue ? "*" : "";
+    public void onTimerStopped(String timerId) {
+        if (timerId.equals(observedTimerId) && "stopped".equals(triggerEvent)) {
+            setCurrentValue(false);
+        }
+    }
+
+    @Override
+    public void onTimerExpired(String timerId) {
+        if (timerId.equals(observedTimerId) && "expired".equals(triggerEvent)) {
+            setCurrentValue(true);
+            applyPattern();
+        }
+    }
+
+    @Override
+    public void onThresholdCrossed(String timerId, int threshold) {
+        if (timerId.equals(observedTimerId) && triggerEvent != null && triggerEvent.equals("threshold:" + threshold)) {
+            setCurrentValue(true);
+            applyPattern();
+        }
+    }
+
+    public void setCurrentValue(boolean value) {
+        this.currentValue = value;
+        if (!value) {
+            stopPattern(); // Ensure horn turns off
+        } else if (pattern != null) {
+            applyPattern();
+        }
+    }
+
+    private void applyPattern() {
+        if (pattern != null && pattern.startsWith("flash:")) {
+            int millis = Integer.parseInt(pattern.split(":")[1]);
+            Timeline flash = new Timeline(
+                new KeyFrame(Duration.millis(millis), e -> this.currentValue = !this.currentValue)
+            );
+            flash.setCycleCount(6); // Flash 3 times (on-off pairs)
+            flash.play();
+        }
+    }
+
+    private void stopPattern() {
+        this.currentValue = false;
+        // Stop any ongoing Timeline if needed
     }
 
     public boolean getCurrentValue() {
         return currentValue;
     }
-
-    public void setCurrentValue(boolean value, boolean force) {
-        if (force || value != currentValue) {
-            currentValue = value;
-            if (value && currentPattern > 0 && !patternRunning) {
-                patternRunning = true;
-                patternTimeline.stop();
-                patternTimeline.getKeyFrames().clear();
-                switch (currentPattern) {
-                    case 1: // Single beep
-                        patternTimeline.getKeyFrames().addAll(
-                            new KeyFrame(Duration.ZERO, e -> currentValue = true),
-                            new KeyFrame(Duration.seconds(2.5), e -> {
-                                currentValue = false;
-                                patternRunning = false;
-                                patternTimeline.stop();
-                            })
-                        );
-                        break;
-                    case 2: // Double beep
-                        patternTimeline.getKeyFrames().addAll(
-                            new KeyFrame(Duration.ZERO, e -> currentValue = true),
-                            new KeyFrame(Duration.millis(300), e -> currentValue = false),
-                            new KeyFrame(Duration.millis(600), e -> currentValue = true),
-                            new KeyFrame(Duration.millis(900), e -> {
-                                currentValue = false;
-                                patternRunning = false;
-                                patternTimeline.stop();
-                            })
-                        );
-                        break;
-                    case 3: // Triple beep
-                        patternTimeline.getKeyFrames().addAll(
-                            new KeyFrame(Duration.ZERO, e -> currentValue = true),
-                            new KeyFrame(Duration.millis(500), e -> currentValue = false),
-                            new KeyFrame(Duration.millis(1000), e -> currentValue = true),
-                            new KeyFrame(Duration.millis(1500), e -> currentValue = false),
-                            new KeyFrame(Duration.millis(2000), e -> currentValue = true),
-                            new KeyFrame(Duration.millis(3000), e -> {
-                                currentValue = false;
-                                patternRunning = false;
-                                patternTimeline.stop();
-                            })
-                        );
-                        break;
-                }
-                patternTimeline.playFromStart();
-            } else if (!value) {
-                currentValue = false;
-                patternTimeline.stop();
-                patternRunning = false;
-            }
-        }
+    
+    @Override
+    public void reset() {
+        currentValue = false;
+        this.stopPattern();
     }
 
-    public int getCurrentPattern() {
-        return currentPattern;
+    @Override
+    public String getDisplayValue() {
+        return currentValue ? "*" : "";
     }
 }

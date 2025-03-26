@@ -2,47 +2,54 @@ package com.scorebrain.grokrules;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class RuleEngine {
+    private ScoreEventBus eventBus = new ScoreEventBus();
     private Map<String, ScoreElement> elements = new HashMap<>();
-    private Map<String, JsonObject> elementConfigs = new HashMap<>();
-    private Map<String, String> messages = new HashMap<>();
 
     public RuleEngine(String ruleFilePath) {
         loadRules(ruleFilePath);
     }
 
     private void loadRules(String ruleFilePath) {
+        // Assume JSON parsing logic here
         try {
-            Gson gson = new Gson();
-            JsonObject rules = gson.fromJson(new FileReader(ruleFilePath), JsonObject.class);
+            JsonObject json = new Gson().fromJson(new FileReader(ruleFilePath), JsonObject.class);
+            JsonArray elementsArray = json.getAsJsonArray("elements");
             
-            JsonArray elementsArray = rules.getAsJsonArray("elements");
-            for (int i = 0; i < elementsArray.size(); i++) {
-                JsonObject config = elementsArray.get(i).getAsJsonObject();
+            for (JsonElement element : elementsArray) {
+                JsonObject config = element.getAsJsonObject();
                 String type = config.get("type").getAsString();
-                ScoreElement element;
-                switch (type) {
-                    case "ScoreTimer":
-                        element = new ScoreTimer(this); // Pass RuleEngine instance
-                        break;
-                    case "ScoreIndicator":
-                        element = new ScoreIndicator();
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Unknown element type: " + type);
+                ScoreElement scoreElement;
+                
+                if ("ScoreTimer".equals(type)) {
+                    scoreElement = new ScoreTimer(eventBus);
+                } else if ("ScoreIndicator".equals(type)) {
+                    scoreElement = new ScoreIndicator();
+                } else {
+                    continue;
                 }
-                element.initialize(config);
-                elements.put(element.getId(), element);
-                elementConfigs.put(element.getId(), config);
+                
+                scoreElement.initialize(config);
+                elements.put(scoreElement.getId(), scoreElement);
+                
+                if (scoreElement instanceof ScoreIndicator) {
+                    ScoreIndicator indicator = (ScoreIndicator) scoreElement;
+                    String timerId = config.has("observedTimerId") ? config.get("observedTimerId").getAsString() : null;
+                    if (timerId != null) {
+                        eventBus.registerTimerObserver(timerId, indicator);
+                    }
+                }
             }
-            
-            JsonObject messagesObj = rules.get("messages").getAsJsonObject();
-            messagesObj.entrySet().forEach(e -> messages.put(e.getKey(), e.getValue().getAsString()));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -52,15 +59,7 @@ public class RuleEngine {
         return elements.get(id);
     }
 
-    public JsonObject getElementConfig(String id) {
-        return elementConfigs.get(id);
-    }
-
-    public String getMessage(String key) {
-        return messages.getOrDefault(key, "");
-    }
-
-    public void reset() {
-        elements.values().forEach(ScoreElement::reset);
+    public Collection<ScoreElement> getElements() {
+        return elements.values();
     }
 }
