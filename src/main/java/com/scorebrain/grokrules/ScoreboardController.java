@@ -182,12 +182,16 @@ public class ScoreboardController {
             timerLabel.setText(timer.getDisplayValue());
             runningIndicator.setFill(timer.isRunning() ? 
                 javafx.scene.paint.Color.RED : javafx.scene.paint.Color.DARKGRAY);
-            lcdLine1.setText("Timer " + (currentTimerIndex + 1) + ": " + timer.getDisplayValue());
         }
         String hornId = timerIds[currentTimerIndex] + "_Horn";
         ScoreIndicator horn = (ScoreIndicator) ruleEngine.getElement(hornId);
         if (horn != null) {
             hornSymbol.setVisible(horn.getCurrentValue());
+            String lcdText = "Timer " + (currentTimerIndex + 1) + ": " + timer.getDisplayValue();
+            if (horn.getCurrentValue()) {
+                lcdText += " *"; // Append "*" when horn is active
+            }
+            lcdLine1.setText(lcdText);
         }
     }
 

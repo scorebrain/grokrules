@@ -67,11 +67,16 @@ public class ScoreIndicator implements ScoreElement, TimerObserver {
 
     private void applyPattern() {
         if (pattern != null && pattern.startsWith("flash:")) {
-            int millis = Integer.parseInt(pattern.split(":")[1]);
+            int millis = Integer.parseInt(pattern.split(":")[1]); // e.g., "flash:500" means 500ms intervals
             Timeline flash = new Timeline(
-                new KeyFrame(Duration.millis(millis), e -> this.currentValue = !this.currentValue)
+                new KeyFrame(Duration.millis(0), e -> this.currentValue = true),      // Start ON
+                new KeyFrame(Duration.millis(millis), e -> this.currentValue = false), // OFF
+                new KeyFrame(Duration.millis(millis * 2), e -> this.currentValue = true),  // ON
+                new KeyFrame(Duration.millis(millis * 3), e -> this.currentValue = false), // OFF
+                new KeyFrame(Duration.millis(millis * 4), e -> this.currentValue = false)  // Final OFF
             );
-            flash.setCycleCount(6); // Flash 3 times (on-off pairs)
+            flash.setCycleCount(1); // Run the pattern once
+            flash.setOnFinished(e -> this.currentValue = false); // Ensure OFF when done
             flash.play();
         }
     }
