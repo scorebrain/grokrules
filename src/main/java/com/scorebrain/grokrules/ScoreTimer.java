@@ -7,14 +7,15 @@ import javafx.animation.KeyFrame;
 import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ScoreTimer implements ScoreElement {
     private String id;
+    private int initialSeconds;
     private int currentSeconds;
     private boolean isRunning;
     private ScoreEventBus eventBus;
-    private List<Integer> thresholds; // For Flash Zone or other triggers
+    private List<Integer> thresholds;
+    private Timeline timeline;
 
     public ScoreTimer(ScoreEventBus eventBus) {
         this.eventBus = eventBus;
@@ -22,17 +23,18 @@ public class ScoreTimer implements ScoreElement {
     }
 
     @Override
-public void initialize(JsonObject config) {
-    this.id = config.get("id").getAsString();
-    this.currentSeconds = config.get("initialSeconds").getAsInt();
-    if (config.has("thresholds")) {
-        JsonArray thresholdsArray = config.getAsJsonArray("thresholds");
-        this.thresholds = new ArrayList<>();
-        for (int i = 0; i < thresholdsArray.size(); i++) {
-            this.thresholds.add(thresholdsArray.get(i).getAsInt());
+    public void initialize(JsonObject config) {
+        this.id = config.get("id").getAsString();
+        this.initialSeconds = config.get("initialSeconds").getAsInt(); // Store it
+        this.currentSeconds = initialSeconds;
+        if (config.has("thresholds")) {
+            JsonArray thresholdsArray = config.getAsJsonArray("thresholds");
+            // this.thresholds = new ArrayList<>();
+            for (int i = 0; i < thresholdsArray.size(); i++) {
+                this.thresholds.add(thresholdsArray.get(i).getAsInt());
+            }
         }
     }
-}
 
     @Override
     public String getId() {
@@ -41,32 +43,37 @@ public void initialize(JsonObject config) {
 
     public boolean startstop() {
         if (isRunning) {
+            if (timeline != null) {
+                timeline.pause(); // Pause the existing timeline
+            }
             isRunning = false;
             eventBus.notifyTimerStopped(id);
             if (currentSeconds <= 0) {
                 eventBus.notifyTimerExpired(id);
             }
         } else {
-            isRunning = true;
-            eventBus.notifyTimerStarted(id);
-            // Start countdown logic (e.g., a Timeline or Thread)
-            startCountdown();
+            if (currentSeconds > 0) { // Only start if time remains
+                if (timeline == null) {
+                    // Create the timeline only if it doesn’t exist
+                    timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+                        currentSeconds--;
+                        checkThresholds();
+                        if (currentSeconds <= 0) {
+                            timeline.stop();
+                            isRunning = false;
+                            eventBus.notifyTimerExpired(id);
+                        }
+                    }));
+                    timeline.setCycleCount(Timeline.INDEFINITE); // Run until stopped
+                }
+                timeline.play(); // Start or resume the timeline
+                isRunning = true;
+                eventBus.notifyTimerStarted(id);
+            } else {
+                return false; // Can’t start if time is already 0
+            }
         }
         return true;
-    }
-
-    private void startCountdown() {
-        // Assuming JavaFX Timeline for countdown
-        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
-            currentSeconds--;
-            checkThresholds();
-            if (currentSeconds <= 0) {
-                isRunning = false;
-                eventBus.notifyTimerExpired(id);
-            }
-        }));
-        timeline.setCycleCount(currentSeconds);
-        timeline.play();
     }
 
     private void checkThresholds() {
@@ -104,9 +111,37 @@ public void initialize(JsonObject config) {
     
     @Override
     public void reset() {
-        //if (timeline != null) timeline.stop();
-        //currentSeconds = initialSeconds;
+        if (timeline != null) {
+            timeline.stop(); // Stop the timeline
+        }
+        currentSeconds = initialSeconds; // Reset to initial value
         isRunning = false;
-        //setupTimeline();
     }
+    /*
+    private void setupTimeline() {
+        if (timeline == null) {  // Only create if it doesn’t exist
+            timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+                if (isCountingDown && isRunning) {
+                    System.out.println("Timer " + id + " decrementing to " + (currentSeconds - 1));
+                    currentSeconds--;
+                    for (int threshold : thresholds) {
+                        if (currentSeconds == threshold) {
+                            eventBus.notifyThresholdCrossed(id, threshold);
+                        }
+                    }
+                    if (currentSeconds <= 0) {
+                        timeline.stop();  // Stop when expired
+                        isRunning = false;
+                        eventBus.notifyTimerExpired(id);
+                    }
+                } else if (!isCountingDown && isRunning) {
+                    currentSeconds++;
+                }
+            }));
+            timeline.setCycleCount(Timeline.INDEFINITE);
+        } else {
+            timeline.stop();  // Ensure it’s stopped before reuse
+        }
+    }
+   */
 }
