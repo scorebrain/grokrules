@@ -12,7 +12,7 @@
       "initialValue": false,
       "observedTimerId": "timerOne",
       "triggerEvent": "expired",
-      "pattern": "flash:500"
+      "pattern": "1500:true"
     },
     {
       "type": "ScoreTimer",
@@ -26,7 +26,7 @@
       "initialValue": false,
       "observedTimerId": "timerTwo",
       "triggerEvent": "threshold:20",
-      "pattern": "flash:300"
+      "pattern": "300:true,200:false,300:true,200:false"
     },
     {
       "type": "ScoreTimer",
@@ -40,7 +40,7 @@
       "initialValue": false,
       "observedTimerId": "timerThree",
       "triggerEvent": "expired",
-      "pattern": "flash:700"
+      "pattern": "200:true,200:false,200:true,200:false,600:true"
     }
   ]
 }

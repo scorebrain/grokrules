@@ -11,6 +11,14 @@ public class ScoreIndicator implements ScoreElement, TimerObserver {
     private String observedTimerId;
     private String triggerEvent; // e.g., "started", "expired", "threshold:10"
     private String pattern; // e.g., "flash:500" for 500ms flashing
+    
+    public ScoreIndicator(String id, String observedTimerId, String triggerEvent, String pattern) {
+        this.id = id;
+        this.observedTimerId = observedTimerId;
+        this.triggerEvent = triggerEvent;
+        this.pattern = pattern;
+        this.currentValue = false;
+    }
 
     @Override
     public void initialize(JsonObject config) {
@@ -44,27 +52,35 @@ public class ScoreIndicator implements ScoreElement, TimerObserver {
     public void onTimerExpired(String timerId) {
         if (timerId.equals(observedTimerId) && "expired".equals(triggerEvent)) {
             setCurrentValue(true);
-            applyPattern();
+            // applyPattern();
         }
     }
 
     @Override
     public void onThresholdCrossed(String timerId, int threshold) {
+        if (timerId.equals(observedTimerId) && triggerEvent.startsWith("threshold")) {
+            setCurrentValue(true);
+        }
+        /*
         if (timerId.equals(observedTimerId) && triggerEvent != null && triggerEvent.equals("threshold:" + threshold)) {
             setCurrentValue(true);
             applyPattern();
         }
+*/
     }
 
     public void setCurrentValue(boolean value) {
         this.currentValue = value;
+        /*
         if (!value) {
             stopPattern(); // Ensure horn turns off
         } else if (pattern != null) {
             applyPattern();
         }
+*/
     }
 
+    /*
     private void applyPattern() {
         if (pattern != null && pattern.startsWith("flash:")) {
             int millis = Integer.parseInt(pattern.split(":")[1]); // e.g., "flash:500" means 500ms intervals
@@ -80,20 +96,27 @@ public class ScoreIndicator implements ScoreElement, TimerObserver {
             flash.play();
         }
     }
+*/
 
+    /*
     private void stopPattern() {
         this.currentValue = false;
         // Stop any ongoing Timeline if needed
     }
+*/
 
     public boolean getCurrentValue() {
         return currentValue;
     }
     
+    public String getPattern() { 
+        return pattern;
+    }
+    
     @Override
     public void reset() {
         currentValue = false;
-        this.stopPattern();
+        // this.stopPattern();
     }
 
     @Override

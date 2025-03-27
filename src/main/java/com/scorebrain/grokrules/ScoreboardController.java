@@ -17,6 +17,7 @@ public class ScoreboardController {
     private int currentTimerIndex = 0;
     private StringBuilder inputBuffer = new StringBuilder();
     private Timeline uiTimer;
+    private Timeline hornTimeline;
     private boolean settingMode = false;
 
     // UI elements from grokrules.fxml
@@ -146,8 +147,9 @@ public class ScoreboardController {
     private void handleHorn(ActionEvent event) {
         String hornId = timerIds[currentTimerIndex] + "_Horn";
         ScoreIndicator horn = (ScoreIndicator) ruleEngine.getElement(hornId);
-        if (horn != null) {
+        if (horn != null && !horn.getCurrentValue()) {
             horn.setCurrentValue(true);
+            startHornAnimation(horn);
             updateUI();
         }
     }
@@ -177,26 +179,58 @@ public class ScoreboardController {
 
     // Update the UI based on the current timer and indicator states
     private void updateUI() {
-        ScoreTimer timer = getSelectedTimer();
+        // ScoreTimer timer = getSelectedTimer();
+        String hornId = timerIds[currentTimerIndex] + "_Horn";
+        ScoreIndicator horn = (ScoreIndicator) ruleEngine.getElement(hornId);
+        ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(timerIds[currentTimerIndex]);
         if (timer != null) {
             timerLabel.setText(timer.getDisplayValue());
             runningIndicator.setFill(timer.isRunning() ? 
                 javafx.scene.paint.Color.RED : javafx.scene.paint.Color.DARKGRAY);
         }
-        String hornId = timerIds[currentTimerIndex] + "_Horn";
-        ScoreIndicator horn = (ScoreIndicator) ruleEngine.getElement(hornId);
-        if (horn != null) {
-            hornSymbol.setVisible(horn.getCurrentValue());
-            String lcdText = "Timer " + (currentTimerIndex + 1) + ": " + timer.getDisplayValue();
-            if (horn.getCurrentValue()) {
-                lcdText += " *"; // Append "*" when horn is active
+        // Update LCD
+        String lcdText = "Timer " + (currentTimerIndex + 1) + ": " + timer.getDisplayValue();
+        if (horn != null && horn.getCurrentValue()) {
+            if (hornTimeline == null) {
+                startHornAnimation(horn);
             }
-            lcdLine1.setText(lcdText);
+            lcdText += " *"; // Steady * when horn is active
         }
+        lcdLine1.setText(lcdText);
     }
 
     // Get the currently selected timer
     private ScoreTimer getSelectedTimer() {
         return (ScoreTimer) ruleEngine.getElement(timerIds[currentTimerIndex]);
+    }
+    
+    private void startHornAnimation(ScoreIndicator horn) {
+        if (horn.getCurrentValue() && horn.getPattern() != null && hornTimeline == null) {
+            String[] steps = horn.getPattern().split(",");
+            hornTimeline = new Timeline();
+            double cumulativeTime = 0;
+
+            for (String step : steps) {
+                String[] parts = step.split(":");
+                double duration = Double.parseDouble(parts[0]);
+                boolean visible = Boolean.parseBoolean(parts[1]);
+                hornTimeline.getKeyFrames().add(
+                    new KeyFrame(Duration.millis(cumulativeTime), e -> hornSymbol.setVisible(visible))
+                );
+                cumulativeTime += duration;
+            }
+            hornTimeline.getKeyFrames().add(
+                    new KeyFrame(Duration.millis(cumulativeTime), e -> hornSymbol.setVisible(false))
+                );
+
+            hornTimeline.setOnFinished(e -> {
+                horn.setCurrentValue(false); // Reset state after animation
+                hornTimeline = null;         // Clear timeline for next trigger
+                updateUI();
+            });
+
+            hornSymbol.setVisible(true);
+            hornTimeline.play();
+        }
     }
 }

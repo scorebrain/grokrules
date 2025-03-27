@@ -34,7 +34,11 @@ public class RuleEngine {
                 if ("ScoreTimer".equals(type)) {
                     scoreElement = new ScoreTimer(eventBus);
                 } else if ("ScoreIndicator".equals(type)) {
-                    scoreElement = new ScoreIndicator();
+                    String indID = config.get("id").getAsString();
+                    String indObserverID = config.has("observedTimerId") ? config.get("observedTimerId").getAsString() : null;
+                    String indTriggerEvent = config.has("triggerEvent") ? config.get("triggerEvent").getAsString() : null;
+                    String indPattern = config.has("pattern") ? config.get("pattern").getAsString() : null;
+                    scoreElement = new ScoreIndicator(indID, indObserverID, indTriggerEvent, indPattern);
                 } else {
                     continue;
                 }
