@@ -1,7 +1,7 @@
 package com.scorebrain.grokrules;
 
-import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -21,21 +21,21 @@ public class ScoreboardController {
     private boolean settingMode = false;
 
     // UI elements from grokrules.fxml
-    @FXML private Label timerLabel;          // Displays the current timer value
-    @FXML private Label lcdLine1;           // Top LCD line (e.g., timer status)
-    @FXML private Label lcdLine2;           // Bottom LCD line (e.g., input feedback)
-    @FXML private Button buttonPlusOne;     // Increment timer by 1 second
-    @FXML private Button buttonMinusOne;    // Decrement timer by 1 second
-    @FXML private Button buttonSet;         // Enter set mode to input a new value
-    @FXML private Button buttonStartStop;   // Toggle timer running state
-    @FXML private Button buttonEnter;       // Confirm input in set mode
-    @FXML private Button buttonBackspace;   // Backspace in set mode
-    @FXML private Circle runningIndicator;  // Shows if the timer is running
-    @FXML private Text hornSymbol;          // Indicates horn state
-    @FXML private Button buttonHorn;        // Trigger the horn
-    @FXML private Button buttonNextTimer;   // Cycle to the next timer
-    @FXML private Button button0, button1, button2, button3, button4, 
-          button5, button6, button7, button8, button9; // Number buttons for input
+    @FXML private Label timerLabel;
+    @FXML private Label lcdLine1;
+    @FXML private Label lcdLine2;
+    @FXML private Button buttonPlusOne;
+    @FXML private Button buttonMinusOne;
+    @FXML private Button buttonSet;
+    @FXML private Button buttonStartStop;
+    @FXML private Button buttonEnter;
+    @FXML private Button buttonBackspace;
+    @FXML private Circle runningIndicator;
+    @FXML private Text hornSymbol;
+    @FXML private Button buttonHorn;
+    @FXML private Button buttonNextTimer;
+    @FXML private Button button0, button1, button2, button3, button4,
+          button5, button6, button7, button8, button9;
 
     @FXML
     private void initialize() {
@@ -43,7 +43,6 @@ public class ScoreboardController {
         startUITimer();
     }
 
-    // Handle number button clicks (0-9) in set mode
     @FXML
     private void handleNumberClick(ActionEvent event) {
         if (!settingMode) return;
@@ -53,7 +52,6 @@ public class ScoreboardController {
         lcdLine2.setText("ENTER TIME: " + inputBuffer.toString());
     }
 
-    // Handle backspace in set mode
     @FXML
     private void handleBackClick(ActionEvent event) {
         if (!settingMode) return;
@@ -66,7 +64,6 @@ public class ScoreboardController {
         }
     }
 
-    // Increment the timer by 1 second
     @FXML
     private void handlePlusOne(ActionEvent event) {
         ScoreTimer timer = getSelectedTimer();
@@ -78,7 +75,6 @@ public class ScoreboardController {
         }
     }
 
-    // Decrement the timer by 1 second
     @FXML
     private void handleMinusOne(ActionEvent event) {
         ScoreTimer timer = getSelectedTimer();
@@ -90,7 +86,6 @@ public class ScoreboardController {
         }
     }
 
-    // Toggle set mode for entering a new timer value
     @FXML
     private void handleSet(ActionEvent event) {
         ScoreTimer timer = getSelectedTimer();
@@ -111,7 +106,6 @@ public class ScoreboardController {
         }
     }
 
-    // Confirm the entered value in set mode
     @FXML
     private void handleEnter(ActionEvent event) {
         if (!settingMode || inputBuffer.length() == 0) return;
@@ -132,7 +126,6 @@ public class ScoreboardController {
         }
     }
 
-    // Toggle the timer's running state
     @FXML
     private void handleStartStop(ActionEvent event) {
         ScoreTimer timer = getSelectedTimer();
@@ -142,7 +135,6 @@ public class ScoreboardController {
         }
     }
 
-    // Trigger the horn
     @FXML
     private void handleHorn(ActionEvent event) {
         String hornId = timerIds[currentTimerIndex] + "_Horn";
@@ -154,22 +146,19 @@ public class ScoreboardController {
         }
     }
 
-    // Cycle to the next timer
     @FXML
     private void handleNextTimer(ActionEvent event) {
         currentTimerIndex = (currentTimerIndex + 1) % timerIds.length;
         updateUI();
     }
 
-    // Start a periodic UI update timer
     private void startUITimer() {
         if (uiTimer != null) uiTimer.stop();
-        uiTimer = new Timeline(new KeyFrame(Duration.seconds(0.1), e -> updateUI()));
+        uiTimer = new Timeline(new KeyFrame(Duration.seconds(0.0167), e -> updateUI()));
         uiTimer.setCycleCount(Timeline.INDEFINITE);
         uiTimer.play();
     }
 
-    // Reset the UI to the default state
     private void resetUI() {
         updateUI();
         if (!settingMode) {
@@ -177,33 +166,29 @@ public class ScoreboardController {
         }
     }
 
-    // Update the UI based on the current timer and indicator states
     private void updateUI() {
-        // ScoreTimer timer = getSelectedTimer();
         String hornId = timerIds[currentTimerIndex] + "_Horn";
         ScoreIndicator horn = (ScoreIndicator) ruleEngine.getElement(hornId);
         ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(timerIds[currentTimerIndex]);
         if (timer != null) {
             timerLabel.setText(timer.getDisplayValue());
-            runningIndicator.setFill(timer.isRunning() ? 
+            runningIndicator.setFill(timer.isRunning() ?
                 javafx.scene.paint.Color.RED : javafx.scene.paint.Color.DARKGRAY);
         }
-        // Update LCD
         String lcdText = "Timer " + (currentTimerIndex + 1) + ": " + timer.getDisplayValue();
         if (horn != null && horn.getCurrentValue()) {
             if (hornTimeline == null) {
                 startHornAnimation(horn);
             }
-            lcdText += " *"; // Steady * when horn is active
+            lcdText += " *";
         }
         lcdLine1.setText(lcdText);
     }
 
-    // Get the currently selected timer
     private ScoreTimer getSelectedTimer() {
         return (ScoreTimer) ruleEngine.getElement(timerIds[currentTimerIndex]);
     }
-    
+
     private void startHornAnimation(ScoreIndicator horn) {
         if (horn.getCurrentValue() && horn.getPattern() != null && hornTimeline == null) {
             String[] steps = horn.getPattern().split(",");
@@ -220,12 +205,12 @@ public class ScoreboardController {
                 cumulativeTime += duration;
             }
             hornTimeline.getKeyFrames().add(
-                    new KeyFrame(Duration.millis(cumulativeTime), e -> hornSymbol.setVisible(false))
-                );
+                new KeyFrame(Duration.millis(cumulativeTime), e -> hornSymbol.setVisible(false))
+            );
 
             hornTimeline.setOnFinished(e -> {
-                horn.setCurrentValue(false); // Reset state after animation
-                hornTimeline = null;         // Clear timeline for next trigger
+                horn.setCurrentValue(false);
+                hornTimeline = null;
                 updateUI();
             });
 
