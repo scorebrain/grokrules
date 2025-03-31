@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier; // Added import
 
 // Main application class
 public class App extends Application {
@@ -213,6 +214,7 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
     private String observedTimerId;
     private String triggerEvent;
     private String pattern;
+    private Supplier<String> selectedTimerSupplier; // Added field to track selected timer
 
     public ScoreIndicator(String id, String observedTimerId, String triggerEvent, String pattern) {
         this.id = id;
@@ -231,6 +233,11 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
         this.pattern = config.has("pattern") ? config.get("pattern").getAsString() : null;
     }
 
+    /** Sets the supplier that provides the currently selected timer ID. */
+    public void setSelectedTimerSupplier(Supplier<String> supplier) {
+        this.selectedTimerSupplier = supplier;
+    }
+    
     @Override
     public String getId() {
         return id;
@@ -253,14 +260,30 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
     @Override
     public void onTimerExpired(String timerId) {
         if (timerId.equals(observedTimerId) && "expired".equals(triggerEvent)) {
-            setCurrentValue(true);
+            // Only activate if the timer is currently selected
+            if (selectedTimerSupplier != null && timerId.equals(selectedTimerSupplier.get())) {
+                setCurrentValue(true);
+            }
         }
     }
 
     @Override
     public void onThresholdCrossed(String timerId, int threshold) {
-        if (timerId.equals(observedTimerId) && triggerEvent.startsWith("threshold")) {
-            setCurrentValue(true);
+        if (timerId.equals(observedTimerId) && triggerEvent.startsWith("threshold:")) {
+            String[] parts = triggerEvent.split(":");
+            if (parts.length == 2) {
+                try {
+                    int triggerThreshold = Integer.parseInt(parts[1]);
+                    if (triggerThreshold == threshold) {
+                        // Only activate if the timer is currently selected
+                        if (selectedTimerSupplier != null && timerId.equals(selectedTimerSupplier.get())) {
+                            setCurrentValue(true);
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    // Ignore if threshold value is malformed
+                }
+            }
         }
     }
 

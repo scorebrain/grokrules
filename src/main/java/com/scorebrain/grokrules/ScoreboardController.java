@@ -10,6 +10,8 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 
+import java.util.function.Supplier;
+
 public class ScoreboardController {
 
     private RuleEngine ruleEngine = new RuleEngine("grokruleset.json");
@@ -41,6 +43,18 @@ public class ScoreboardController {
     private void initialize() {
         resetUI();
         startUITimer();
+        // Set the supplier for each ScoreIndicator to check the selected timer
+        for (ScoreElement element : ruleEngine.getElements()) {
+            if (element instanceof ScoreIndicator) {
+                ScoreIndicator indicator = (ScoreIndicator) element;
+                indicator.setSelectedTimerSupplier(this::getSelectedTimerId);
+            }
+        }
+    }
+
+    /** Returns the ID of the currently selected timer. */
+    public String getSelectedTimerId() {
+        return timerIds[currentTimerIndex];
     }
 
     @FXML
