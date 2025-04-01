@@ -16,7 +16,17 @@
     
     <!-- Scoreboard Area -->
     <Label text="Scoreboard" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
-    <Label fx:id="timerLabel" text="01:00" style="-fx-font-size: 16px; -fx-text-fill: #333333;"/>
+    <HBox alignment="CENTER" spacing="20">
+        <VBox alignment="CENTER" spacing="5">
+            <Label text="GUEST" style="-fx-font-size: 16px;"/>
+            <Label fx:id="guestPointsLabel" text="0" style="-fx-font-size: 16px;"/>
+        </VBox>
+        <Label fx:id="timerLabel" text="01:00" style="-fx-font-size: 16px; -fx-text-fill: #333333;"/>
+        <VBox alignment="CENTER" spacing="5">
+            <Label text="HOME" style="-fx-font-size: 16px;"/>
+            <Label fx:id="homePointsLabel" text="0" style="-fx-font-size: 16px;"/>
+        </VBox>
+    </HBox>
     <HBox alignment="CENTER_RIGHT" style="-fx-pref-width: 400;">
         <Text fx:id="hornSymbol" text="H" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #333333;" visible="false"/>
     </HBox>
@@ -30,6 +40,23 @@
     </VBox>
     
     <HBox spacing="20" alignment="CENTER">
+        <!-- Guest Points buttons -->
+        <VBox spacing="10" alignment="CENTER_LEFT">
+            <Button text="+1 Point" onAction="#handleGuestPlusOne" style="-fx-font-size: 12px;"/>
+            <Button text="+2 Points" onAction="#handleGuestPlusTwo" style="-fx-font-size: 12px;"/>
+            <Button text="+6 Points" onAction="#handleGuestPlusSix" style="-fx-font-size: 12px;"/>
+            <Button text="Set Points" onAction="#handleGuestSetPoints" style="-fx-font-size: 12px;"/>
+            <Button text="-1 Point" onAction="#handleGuestMinusOne" style="-fx-font-size: 12px;"/>
+        </VBox>
+        <!-- Home Points buttons -->
+        <VBox spacing="10" alignment="CENTER_LEFT">
+            <Button text="+1 Point" onAction="#handleHomePlusOne" style="-fx-font-size: 12px;"/>
+            <Button text="+2 Points" onAction="#handleHomePlusTwo" style="-fx-font-size: 12px;"/>
+            <Button text="+6 Points" onAction="#handleHomePlusSix" style="-fx-font-size: 12px;"/>
+            <Button text="Set Points" onAction="#handleHomeSetPoints" style="-fx-font-size: 12px;"/>
+            <Button text="-1 Point" onAction="#handleHomeMinusOne" style="-fx-font-size: 12px;"/>
+        </VBox>
+        <!-- Existing timer control buttons -->
         <VBox spacing="10" alignment="CENTER_LEFT">
             <Button fx:id="buttonPlusOne" text="+1" onAction="#handlePlusOne" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
             <Button fx:id="buttonMinusOne" text="-1" onAction="#handleMinusOne" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
@@ -43,23 +70,19 @@
                 <Button fx:id="buttonNextTimer" text="NEXT TIMER" onAction="#handleNextTimer" style="-fx-font-size: 16px; -fx-pref-width: 100; -fx-pref-height: 50; -fx-background-color: #4682b4; -fx-text-fill: white; -fx-border-radius: 5;"/>
             </VBox>
         </VBox>
-        
+        <!-- Existing number buttons -->
         <GridPane hgap="10" vgap="10" alignment="CENTER">
             <Button text="7" GridPane.rowIndex="0" GridPane.columnIndex="0" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
             <Button text="8" GridPane.rowIndex="0" GridPane.columnIndex="1" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
             <Button text="9" GridPane.rowIndex="0" GridPane.columnIndex="2" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
-            
             <Button text="4" GridPane.rowIndex="1" GridPane.columnIndex="0" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
             <Button text="5" GridPane.rowIndex="1" GridPane.columnIndex="1" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
             <Button text="6" GridPane.rowIndex="1" GridPane.columnIndex="2" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
-            
             <Button text="1" GridPane.rowIndex="2" GridPane.columnIndex="0" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
             <Button text="2" GridPane.rowIndex="2" GridPane.columnIndex="1" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
             <Button text="3" GridPane.rowIndex="2" GridPane.columnIndex="2" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
-            
             <Button text="0" GridPane.rowIndex="3" GridPane.columnIndex="1" onAction="#handleNumberClick" style="-fx-font-size: 16px; -fx-pref-width: 50; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>
         </GridPane>
-        
         <VBox spacing="10" alignment="CENTER">
             <Button fx:id="buttonEnter" text="ENTER" onAction="#handleEnter" style="-fx-font-size: 16px; -fx-pref-width: 70; -fx-pref-height: 50; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-border-radius: 5;"/>
             <Button fx:id="buttonBackspace" text="BACK" onAction="#handleBackClick" style="-fx-font-size: 16px; -fx-pref-width: 70; -fx-pref-height: 50; -fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 5;"/>

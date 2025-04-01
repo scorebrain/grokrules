@@ -23,6 +23,7 @@ public class ScoreboardController {
     private boolean settingMode = false;
     private Timeline flashTimeline;
     private boolean isFlashing = false;
+    private String settingCounterId = null; // Track which counter is being set
 
     // UI elements from grokrules.fxml
     @FXML private Label timerLabel;
@@ -40,6 +41,8 @@ public class ScoreboardController {
     @FXML private Button buttonNextTimer;
     @FXML private Button button0, button1, button2, button3, button4,
           button5, button6, button7, button8, button9;
+    @FXML private Label guestPointsLabel;
+    @FXML private Label homePointsLabel;
 
     @FXML
     private void initialize() {
@@ -58,6 +61,80 @@ public class ScoreboardController {
     public String getSelectedTimerId() {
         return timerIds[currentTimerIndex];
     }
+    
+    // Event handlers for Guest Points
+    @FXML
+    private void handleGuestPlusOne() {
+        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("guestPoints");
+        counter.increment(1);
+        updateUI();
+    }
+
+    @FXML
+    private void handleGuestPlusTwo() {
+        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("guestPoints");
+        counter.increment(2);
+        updateUI();
+    }
+
+    @FXML
+    private void handleGuestPlusSix() {
+        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("guestPoints");
+        counter.increment(6);
+        updateUI();
+    }
+
+    @FXML
+    private void handleGuestMinusOne() {
+        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("guestPoints");
+        counter.decrement(1);
+        updateUI();
+    }
+
+    @FXML
+    private void handleGuestSetPoints() {
+        settingMode = true;
+        settingCounterId = "guestPoints";
+        inputBuffer.setLength(0);
+        lcdLine2.setText("ENTER GUEST POINTS: ");
+    }
+
+    // Event handlers for Home Points
+    @FXML
+    private void handleHomePlusOne() {
+        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("homePoints");
+        counter.increment(1);
+        updateUI();
+    }
+
+    @FXML
+    private void handleHomePlusTwo() {
+        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("homePoints");
+        counter.increment(2);
+        updateUI();
+    }
+
+    @FXML
+    private void handleHomePlusSix() {
+        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("homePoints");
+        counter.increment(6);
+        updateUI();
+    }
+
+    @FXML
+    private void handleHomeMinusOne() {
+        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("homePoints");
+        counter.decrement(1);
+        updateUI();
+    }
+
+    @FXML
+    private void handleHomeSetPoints() {
+        settingMode = true;
+        settingCounterId = "homePoints";
+        inputBuffer.setLength(0);
+        lcdLine2.setText("ENTER HOME POINTS: ");
+    }
 
     @FXML
     private void handleNumberClick(ActionEvent event) {
@@ -65,7 +142,11 @@ public class ScoreboardController {
         Button clickedButton = (Button) event.getSource();
         String number = clickedButton.getText();
         inputBuffer.append(number);
-        lcdLine2.setText("ENTER TIME: " + inputBuffer.toString());
+        if (settingCounterId != null) {
+            lcdLine2.setText("ENTER " + settingCounterId.toUpperCase().replace("POINTS", " POINTS") + ": " + inputBuffer.toString());
+        } else {
+            lcdLine2.setText("ENTER TIME: " + inputBuffer.toString());
+        }
     }
 
     @FXML
@@ -73,10 +154,15 @@ public class ScoreboardController {
         if (!settingMode) return;
         if (inputBuffer.length() == 0) {
             settingMode = false;
+            settingCounterId = null;
             resetUI();
         } else {
             inputBuffer.setLength(inputBuffer.length() - 1);
-            lcdLine2.setText("ENTER TIME: " + inputBuffer.toString());
+            if (settingCounterId != null) {
+                lcdLine2.setText("ENTER " + settingCounterId.toUpperCase().replace("POINTS", " POINTS") + ": " + inputBuffer.toString());
+            } else {
+                lcdLine2.setText("ENTER TIME: " + inputBuffer.toString());
+            }
         }
     }
 
@@ -125,14 +211,21 @@ public class ScoreboardController {
     @FXML
     private void handleEnter(ActionEvent event) {
         if (!settingMode || inputBuffer.length() == 0) return;
-        ScoreTimer timer = getSelectedTimer();
         try {
-            String input = inputBuffer.toString();
-            String paddedInput = String.format("%4s", input).replace(' ', '0');
-            int minutes = Integer.parseInt(paddedInput.substring(0, 2));
-            int seconds = Integer.parseInt(paddedInput.substring(2, 4));
-            int totalSeconds = minutes * 60 + seconds;
-            timer.setValue(totalSeconds);
+            int value = Integer.parseInt(inputBuffer.toString());
+            if (settingCounterId != null) {
+                ScoreCounter counter = (ScoreCounter) ruleEngine.getElement(settingCounterId);
+                counter.setCurrentValue(value);
+                settingCounterId = null;
+            } else {
+                ScoreTimer timer = getSelectedTimer();
+                String input = inputBuffer.toString();
+                String paddedInput = String.format("%4s", input).replace(' ', '0');
+                int minutes = Integer.parseInt(paddedInput.substring(0, 2));
+                int seconds = Integer.parseInt(paddedInput.substring(2, 4));
+                int totalSeconds = minutes * 60 + seconds;
+                timer.setValue(totalSeconds);
+            }
             settingMode = false;
             buttonPlusOne.setDisable(false);
             buttonMinusOne.setDisable(false);
@@ -201,6 +294,14 @@ public class ScoreboardController {
                 stopFlashAnimation();
                 isFlashing = false;
             }
+        }
+        ScoreCounter guestPoints = (ScoreCounter) ruleEngine.getElement("guestPoints");
+        ScoreCounter homePoints = (ScoreCounter) ruleEngine.getElement("homePoints");
+        if (guestPoints != null) {
+            guestPointsLabel.setText(guestPoints.getDisplayValue());
+        }
+        if (homePoints != null) {
+            homePointsLabel.setText(homePoints.getDisplayValue());
         }
         String lcdText = "Timer " + (currentTimerIndex + 1) + ": " + timer.getDisplayValue();
         if (horn != null && horn.getCurrentValue()) {

@@ -47,6 +47,20 @@
       "observedTimerId": "timerThree",
       "triggerEvent": "expired",
       "pattern": "200:true,200:false,200:true,200:false,600:true"
+    },
+    {
+      "type": "ScoreCounter",
+      "id": "guestPoints",
+      "initialValue": 0,
+      "minValue": 0,
+      "maxValue": 99
+    },
+    {
+      "type": "ScoreCounter",
+      "id": "homePoints",
+      "initialValue": 0,
+      "minValue": 0,
+      "maxValue": 99
     }
   ]
 }

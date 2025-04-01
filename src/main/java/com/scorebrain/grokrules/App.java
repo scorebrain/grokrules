@@ -28,7 +28,7 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        scene = new Scene(loadFXML("grokrules"), 450, 650);
+        scene = new Scene(loadFXML("grokrules"), 650, 650);
         stage.setTitle("ScoreBrain Grok Rules");
         stage.setScene(scene);
         stage.show();
@@ -323,6 +323,54 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
     }
 }
 
+class ScoreCounter implements ScoreElement {
+    private String id;
+    private int currentValue;
+    private int minValue;
+    private int maxValue;
+    private int initialValue;
+
+    @Override
+    public void initialize(JsonObject config) {
+        this.id = config.get("id").getAsString();
+        this.initialValue = config.get("initialValue").getAsInt();
+        this.minValue = config.get("minValue").getAsInt();
+        this.maxValue = config.get("maxValue").getAsInt();
+        this.currentValue = initialValue;
+    }
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public void reset() {
+        currentValue = initialValue;
+    }
+
+    @Override
+    public String getDisplayValue() {
+        return String.valueOf(currentValue);
+    }
+
+    public void increment(int amount) {
+        currentValue = Math.min(currentValue + amount, maxValue);
+    }
+
+    public void decrement(int amount) {
+        currentValue = Math.max(currentValue - amount, minValue);
+    }
+
+    public void setCurrentValue(int value) {
+        currentValue = Math.max(minValue, Math.min(value, maxValue));
+    }
+
+    public int getCurrentValue() {
+        return currentValue;
+    }
+}
+
 // RuleEngine class
 class RuleEngine {
     private ScoreEventBus eventBus = new ScoreEventBus();
@@ -350,6 +398,8 @@ class RuleEngine {
                     String indTriggerEvent = config.has("triggerEvent") ? config.get("triggerEvent").getAsString() : null;
                     String indPattern = config.has("pattern") ? config.get("pattern").getAsString() : null;
                     scoreElement = new ScoreIndicator(indID, indObserverID, indTriggerEvent, indPattern);
+                } else if ("ScoreCounter".equals(type)) {
+                    scoreElement = new ScoreCounter();
                 } else {
                     continue;
                 }
