@@ -1,5 +1,8 @@
 package com.scorebrain.grokrules;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import java.util.List;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -25,6 +28,7 @@ public class ScoreboardController {
     private Timeline flashTimeline;
     private boolean isFlashing = false;
     private String settingCounterId = null; // Track which counter is being set
+    private JsonObject uiConfig;
 
     // UI elements from grokrules.fxml
     @FXML private Label timerLabel;
@@ -48,6 +52,23 @@ public class ScoreboardController {
     @FXML
     private void initialize() {
         timerIds = ruleEngine.getTimerIds();
+        JsonObject uiConfig = ruleEngine.getUiConfig();
+        if (uiConfig.has("buttons")) {
+            JsonArray buttons = uiConfig.getAsJsonArray("buttons");
+            for (JsonElement btn : buttons) {
+                JsonObject btnConfig = btn.getAsJsonObject();
+                String id = btnConfig.get("id").getAsString();
+                String label = btnConfig.get("label").getAsString();
+                Button button = switch (id) { // Map fx:id to Button reference
+                    case "buttonPlusOne" -> buttonPlusOne;
+                    case "buttonMinusOne" -> buttonMinusOne;
+                    default -> null;
+                };
+                if (button != null) {
+                    button.setText(label);
+                }
+            }
+        }
         resetUI();
         startUITimer();
         // Set the supplier for each ScoreIndicator to check the selected timer

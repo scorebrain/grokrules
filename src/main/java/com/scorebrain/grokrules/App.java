@@ -376,6 +376,7 @@ class RuleEngine {
     private ScoreEventBus eventBus = new ScoreEventBus();
     private Map<String, ScoreElement> elements = new HashMap<>();
     private List<String> timerIds = new ArrayList<>();
+    private JsonObject uiConfig;
 
     public RuleEngine(String ruleFilePath) {
         loadRules(ruleFilePath);
@@ -384,6 +385,7 @@ class RuleEngine {
     private void loadRules(String ruleFilePath) {
         try {
             JsonObject json = new Gson().fromJson(new FileReader(ruleFilePath), JsonObject.class);
+            uiConfig = json.has("uiConfig") ? json.getAsJsonObject("uiConfig") : new JsonObject();
             JsonArray elementsArray = json.getAsJsonArray("elements");
 
             for (JsonElement element : elementsArray) {
@@ -441,5 +443,9 @@ class RuleEngine {
     
     public List<String> getTimerIds() {
         return timerIds;
+    }
+    
+    public JsonObject getUiConfig() {
+        return uiConfig;
     }
 }
