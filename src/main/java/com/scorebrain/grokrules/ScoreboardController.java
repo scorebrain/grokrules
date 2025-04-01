@@ -21,6 +21,8 @@ public class ScoreboardController {
     private Timeline uiTimer;
     private Timeline hornTimeline;
     private boolean settingMode = false;
+    private Timeline flashTimeline;
+    private boolean isFlashing = false;
 
     // UI elements from grokrules.fxml
     @FXML private Label timerLabel;
@@ -188,6 +190,17 @@ public class ScoreboardController {
             timerLabel.setText(timer.getDisplayValue());
             runningIndicator.setFill(timer.isRunning() ?
                 javafx.scene.paint.Color.RED : javafx.scene.paint.Color.DARKGRAY);
+            // Determine if the timer should flash
+            boolean shouldFlash = timer.isRunning() && timer.getCurrentValue() <= timer.getFlashZoneThreshold() && timer.getFlashZoneThreshold() >= 0;
+
+            // Manage flashing state
+            if (shouldFlash && !isFlashing) {
+                startFlashAnimation(timer);
+                isFlashing = true;
+            } else if (!shouldFlash && isFlashing) {
+                stopFlashAnimation();
+                isFlashing = false;
+            }
         }
         String lcdText = "Timer " + (currentTimerIndex + 1) + ": " + timer.getDisplayValue();
         if (horn != null && horn.getCurrentValue()) {
@@ -196,7 +209,46 @@ public class ScoreboardController {
             }
             lcdText += " *";
         }
+        if (timer != null && timer.isRunning() && timer.getCurrentValue() <= timer.getFlashZoneThreshold() && timer.getFlashZoneThreshold() >= 0) {
+            lcdText += " F";
+        }
         lcdLine1.setText(lcdText);
+    }
+    
+    private void startFlashAnimation(ScoreTimer timer) {
+        String pattern = timer.getFlashZonePattern();
+        if (pattern == null || pattern.isEmpty()) {
+            return;
+        }
+
+        String[] steps = pattern.split(",");
+        flashTimeline = new Timeline();
+        double cumulativeTime = 0;
+        boolean firstVisible = Boolean.parseBoolean(steps[0].split(":")[1]); // Get initial visibility
+
+        for (String step : steps) {
+            String[] parts = step.split(":");
+            double duration = Double.parseDouble(parts[0]);
+            boolean visible = Boolean.parseBoolean(parts[1]);
+            flashTimeline.getKeyFrames().add(
+                new KeyFrame(Duration.millis(cumulativeTime), e -> timerLabel.setVisible(visible))
+            );
+            cumulativeTime += duration;
+        }
+        // Add a final KeyFrame to reset to the initial state
+        flashTimeline.getKeyFrames().add(
+            new KeyFrame(Duration.millis(cumulativeTime), e -> timerLabel.setVisible(firstVisible))
+        );
+        flashTimeline.setCycleCount(Timeline.INDEFINITE);
+        flashTimeline.play();
+    }
+
+    private void stopFlashAnimation() {
+        if (flashTimeline != null) {
+            flashTimeline.stop();
+            flashTimeline = null;
+        }
+        timerLabel.setVisible(true); // Ensure visibility when not flashing
     }
 
     private ScoreTimer getSelectedTimer() {

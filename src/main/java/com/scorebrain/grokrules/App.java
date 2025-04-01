@@ -106,6 +106,8 @@ class ScoreTimer implements ScoreElement {
     private ScoreEventBus eventBus;
     private List<Integer> thresholds;
     private Timeline timeline;
+    private int flashZoneThreshold;
+    private String flashZonePattern;
 
     public ScoreTimer(ScoreEventBus eventBus) {
         this.eventBus = eventBus;
@@ -123,6 +125,9 @@ class ScoreTimer implements ScoreElement {
                 this.thresholds.add(thresholdsArray.get(i).getAsInt());
             }
         }
+        // Initialize Flash Zone attributes
+        this.flashZoneThreshold = config.has("flashZoneThreshold") ? config.get("flashZoneThreshold").getAsInt() : -1;
+        this.flashZonePattern = config.has("flashZonePattern") ? config.get("flashZonePattern").getAsString() : null;
     }
 
     @Override
@@ -204,6 +209,14 @@ class ScoreTimer implements ScoreElement {
         }
         currentSeconds = initialSeconds;
         isRunning = false;
+    }
+    
+    public int getFlashZoneThreshold() {
+        return flashZoneThreshold;
+    }
+
+    public String getFlashZonePattern() {
+        return flashZonePattern;
     }
 }
 

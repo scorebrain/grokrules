@@ -4,7 +4,9 @@
       "type": "ScoreTimer",
       "id": "timerOne",
       "initialSeconds": 60,
-      "thresholds": [10]
+      "thresholds": [10],
+      "flashZoneThreshold": 10,
+      "flashZonePattern": "500:true,500:false"
     },
     {
       "type": "ScoreIndicator",
@@ -18,7 +20,9 @@
       "type": "ScoreTimer",
       "id": "timerTwo",
       "initialSeconds": 120,
-      "thresholds": [20]
+      "thresholds": [20],
+      "flashZoneThreshold": 25,
+      "flashZonePattern": "200:true,200:false"
     },
     {
       "type": "ScoreIndicator",
@@ -32,7 +36,9 @@
       "type": "ScoreTimer",
       "id": "timerThree",
       "initialSeconds": 30,
-      "thresholds": [5]
+      "thresholds": [5],
+      "flashZoneThreshold": 30,
+      "flashZonePattern": "200:true,200:false,600:true,200:false"
     },
     {
       "type": "ScoreIndicator",
