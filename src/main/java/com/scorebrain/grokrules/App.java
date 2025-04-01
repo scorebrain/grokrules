@@ -375,6 +375,7 @@ class ScoreCounter implements ScoreElement {
 class RuleEngine {
     private ScoreEventBus eventBus = new ScoreEventBus();
     private Map<String, ScoreElement> elements = new HashMap<>();
+    private List<String> timerIds = new ArrayList<>();
 
     public RuleEngine(String ruleFilePath) {
         loadRules(ruleFilePath);
@@ -392,21 +393,30 @@ class RuleEngine {
 
                 if ("ScoreTimer".equals(type)) {
                     scoreElement = new ScoreTimer(eventBus);
+                    scoreElement.initialize(config);
+                    elements.put(scoreElement.getId(), scoreElement);
+                    timerIds.add(scoreElement.getId()); // Add timer ID to list
                 } else if ("ScoreIndicator".equals(type)) {
                     String indID = config.get("id").getAsString();
                     String indObserverID = config.has("observedTimerId") ? config.get("observedTimerId").getAsString() : null;
                     String indTriggerEvent = config.has("triggerEvent") ? config.get("triggerEvent").getAsString() : null;
                     String indPattern = config.has("pattern") ? config.get("pattern").getAsString() : null;
                     scoreElement = new ScoreIndicator(indID, indObserverID, indTriggerEvent, indPattern);
+                    scoreElement.initialize(config);
+                    elements.put(scoreElement.getId(), scoreElement);
+                    ScoreIndicator indicator = (ScoreIndicator) scoreElement;
+                    String timerId = config.has("observedTimerId") ? config.get("observedTimerId").getAsString() : null;
+                    if (timerId != null) {
+                        eventBus.registerTimerObserver(timerId, indicator);
+                    }
                 } else if ("ScoreCounter".equals(type)) {
                     scoreElement = new ScoreCounter();
+                    scoreElement.initialize(config);
+                    elements.put(scoreElement.getId(), scoreElement);
                 } else {
                     continue;
                 }
-
-                scoreElement.initialize(config);
-                elements.put(scoreElement.getId(), scoreElement);
-
+/*
                 if (scoreElement instanceof ScoreIndicator) {
                     ScoreIndicator indicator = (ScoreIndicator) scoreElement;
                     String timerId = config.has("observedTimerId") ? config.get("observedTimerId").getAsString() : null;
@@ -414,6 +424,7 @@ class RuleEngine {
                         eventBus.registerTimerObserver(timerId, indicator);
                     }
                 }
+*/
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -426,5 +437,9 @@ class RuleEngine {
 
     public Collection<ScoreElement> getElements() {
         return elements.values();
+    }
+    
+    public List<String> getTimerIds() {
+        return timerIds;
     }
 }

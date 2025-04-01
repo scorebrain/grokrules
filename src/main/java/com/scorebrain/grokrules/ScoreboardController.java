@@ -1,5 +1,6 @@
 package com.scorebrain.grokrules;
 
+import java.util.List;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
@@ -15,7 +16,7 @@ import java.util.function.Supplier;
 public class ScoreboardController {
 
     private RuleEngine ruleEngine = new RuleEngine("grokruleset.json");
-    private String[] timerIds = {"timerOne", "timerTwo", "timerThree"};
+    private List<String> timerIds;
     private int currentTimerIndex = 0;
     private StringBuilder inputBuffer = new StringBuilder();
     private Timeline uiTimer;
@@ -46,6 +47,7 @@ public class ScoreboardController {
 
     @FXML
     private void initialize() {
+        timerIds = ruleEngine.getTimerIds();
         resetUI();
         startUITimer();
         // Set the supplier for each ScoreIndicator to check the selected timer
@@ -59,7 +61,7 @@ public class ScoreboardController {
 
     /** Returns the ID of the currently selected timer. */
     public String getSelectedTimerId() {
-        return timerIds[currentTimerIndex];
+        return timerIds.get(currentTimerIndex);
     }
     
     // Event handlers for Guest Points
@@ -246,7 +248,7 @@ public class ScoreboardController {
 
     @FXML
     private void handleHorn(ActionEvent event) {
-        String hornId = timerIds[currentTimerIndex] + "_Horn";
+        String hornId = timerIds.get(currentTimerIndex) + "_Horn";
         ScoreIndicator horn = (ScoreIndicator) ruleEngine.getElement(hornId);
         if (horn != null && !horn.getCurrentValue()) {
             horn.setCurrentValue(true);
@@ -257,7 +259,7 @@ public class ScoreboardController {
 
     @FXML
     private void handleNextTimer(ActionEvent event) {
-        currentTimerIndex = (currentTimerIndex + 1) % timerIds.length;
+        currentTimerIndex = (currentTimerIndex + 1) % timerIds.size();
         updateUI();
     }
 
@@ -276,9 +278,9 @@ public class ScoreboardController {
     }
 
     private void updateUI() {
-        String hornId = timerIds[currentTimerIndex] + "_Horn";
+        String hornId = timerIds.get(currentTimerIndex) + "_Horn";
         ScoreIndicator horn = (ScoreIndicator) ruleEngine.getElement(hornId);
-        ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(timerIds[currentTimerIndex]);
+        ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(timerIds.get(currentTimerIndex));
         if (timer != null) {
             timerLabel.setText(timer.getDisplayValue());
             runningIndicator.setFill(timer.isRunning() ?
@@ -294,9 +296,14 @@ public class ScoreboardController {
                 stopFlashAnimation();
                 isFlashing = false;
             }
+        } else {
+            timerLabel.setText("N/A");
+            runningIndicator.setFill(javafx.scene.paint.Color.DARKGRAY);
         }
         ScoreCounter guestPoints = (ScoreCounter) ruleEngine.getElement("guestPoints");
+        guestPointsLabel.setText(guestPoints != null ? guestPoints.getDisplayValue() : "N/A");
         ScoreCounter homePoints = (ScoreCounter) ruleEngine.getElement("homePoints");
+        homePointsLabel.setText(homePoints != null ? homePoints.getDisplayValue() : "N/A");
         if (guestPoints != null) {
             guestPointsLabel.setText(guestPoints.getDisplayValue());
         }
@@ -353,7 +360,7 @@ public class ScoreboardController {
     }
 
     private ScoreTimer getSelectedTimer() {
-        return (ScoreTimer) ruleEngine.getElement(timerIds[currentTimerIndex]);
+        return (ScoreTimer) ruleEngine.getElement(timerIds.get(currentTimerIndex));
     }
 
     private void startHornAnimation(ScoreIndicator horn) {
