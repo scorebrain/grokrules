@@ -28,7 +28,22 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        scene = new Scene(loadFXML("grokrules"), 650, 650);
+        
+        // Load the FXML file
+        FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("grokrules.fxml"));
+        Parent root = fxmlLoader.load();
+
+        // Get the controller instance
+        ScoreboardController controller = fxmlLoader.getController();
+
+        // Pass the root node to the controller
+        controller.setRoot(root);
+
+        // Configure the buttons after setting the root
+        controller.configureButtons();
+
+        // Set up the scene and show the stage
+        scene = new Scene(root, 650, 650);
         stage.setTitle("ScoreBrain Grok Rules");
         stage.setScene(scene);
         stage.show();
@@ -385,9 +400,16 @@ class RuleEngine {
     private void loadRules(String ruleFilePath) {
         try {
             JsonObject json = new Gson().fromJson(new FileReader(ruleFilePath), JsonObject.class);
+            if (json == null) {
+                System.err.println("Failed to parse JSON: JSON is null");
+                return;
+            }
             uiConfig = json.has("uiConfig") ? json.getAsJsonObject("uiConfig") : new JsonObject();
             JsonArray elementsArray = json.getAsJsonArray("elements");
-
+            if (elementsArray == null) {
+                System.err.println("No 'elements' array in JSON");
+                return;
+            }
             for (JsonElement element : elementsArray) {
                 JsonObject config = element.getAsJsonObject();
                 String type = config.get("type").getAsString();
@@ -428,7 +450,9 @@ class RuleEngine {
                 }
 */
             }
+            System.out.println("RuleEngine loaded, timerIds: " + timerIds); // Debug output
         } catch (Exception e) {
+            System.err.println("Error loading rules from " + ruleFilePath + ":");
             e.printStackTrace();
         }
     }

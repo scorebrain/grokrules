@@ -3,7 +3,11 @@ package com.scorebrain.grokrules;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
@@ -15,8 +19,10 @@ import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 import java.util.function.Supplier;
+import javafx.fxml.Initializable;
+import javafx.scene.Parent;
 
-public class ScoreboardController {
+public class ScoreboardController implements Initializable {
 
     private RuleEngine ruleEngine = new RuleEngine("grokruleset.json");
     private List<String> timerIds;
@@ -29,6 +35,9 @@ public class ScoreboardController {
     private boolean isFlashing = false;
     private String settingCounterId = null; // Track which counter is being set
     private JsonObject uiConfig;
+    private Map<String, JsonObject> buttonConfigs = new HashMap<>();
+    // Field to store the root node
+    private Parent root;
 
     // UI elements from grokrules.fxml
     @FXML private Label timerLabel;
@@ -49,10 +58,38 @@ public class ScoreboardController {
     @FXML private Label guestPointsLabel;
     @FXML private Label homePointsLabel;
 
-    @FXML
-    private void initialize() {
-        timerIds = ruleEngine.getTimerIds();
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        System.out.println("Initialize called");
+        try {
+            timerIds = ruleEngine.getTimerIds();
+            System.out.println("timerIds set: " + timerIds);
+            resetUI();
+            startUITimer();
+            for (ScoreElement element : ruleEngine.getElements()) {
+                if (element instanceof ScoreIndicator) {
+                    ScoreIndicator indicator = (ScoreIndicator) element;
+                    indicator.setSelectedTimerSupplier(this::getSelectedTimerId);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Exception in initialize:");
+            e.printStackTrace(); // Log any issues during initialization
+    }
+        /*timerIds = ruleEngine.getTimerIds();
         JsonObject uiConfig = ruleEngine.getUiConfig();
+        if (uiConfig.has("buttons")) {
+            JsonArray buttons = uiConfig.getAsJsonArray("buttons");
+            for (JsonElement btn : buttons) {
+                JsonObject btnConfig = btn.getAsJsonObject();
+                String fxId = btnConfig.get("fxId").getAsString();
+                buttonConfigs.put(fxId, btnConfig);
+                Button button = (Button) root.lookup("#" + fxId); // Requires scene lookup or injection
+                if (button != null) {
+                    button.setText(btnConfig.get("label").getAsString());
+                }
+            }
+        }
         if (uiConfig.has("buttons")) {
             JsonArray buttons = uiConfig.getAsJsonArray("buttons");
             for (JsonElement btn : buttons) {
@@ -77,12 +114,52 @@ public class ScoreboardController {
                 ScoreIndicator indicator = (ScoreIndicator) element;
                 indicator.setSelectedTimerSupplier(this::getSelectedTimerId);
             }
+        }*/
+    }
+    
+    // Method to set the root node
+    public void setRoot(Parent root) {
+        this.root = root;
+    }
+
+    // Method to configure buttons using the root node
+    public void configureButtons() {
+        JsonObject uiConfig = ruleEngine.getUiConfig();
+        if (uiConfig != null && uiConfig.has("buttons")) {
+            JsonArray buttons = uiConfig.getAsJsonArray("buttons");
+            for (JsonElement btn : buttons) {
+                JsonObject btnConfig = btn.getAsJsonObject();
+                String fxId = btnConfig.get("fxId").getAsString();
+                Button button = (Button) root.lookup("#" + fxId);
+                if (button != null) {
+                    button.setText(btnConfig.get("label").getAsString());
+                } else {
+                    System.out.println("Button with fx:id '" + fxId + "' not found.");
+                }
+            }
         }
     }
+    
 
     /** Returns the ID of the currently selected timer. */
     public String getSelectedTimerId() {
         return timerIds.get(currentTimerIndex);
+    }
+    
+    @FXML
+    private void handleGridButton(ActionEvent event) {
+        Button button = (Button) event.getSource();
+        String fxId = button.getId();
+        JsonObject config = buttonConfigs.get(fxId);
+        if (config != null) {
+            String action = config.get("action").getAsString();
+            String target = config.get("target").getAsString();
+            ScoreElement element = ruleEngine.getElement(target);
+            if (element instanceof ScoreCounter counter && "increment".equals(action)) {
+                counter.increment(config.get("amount").getAsInt());
+                updateUI();
+            }
+        }
     }
     
     // Event handlers for Guest Points
@@ -299,6 +376,13 @@ public class ScoreboardController {
     }
 
     private void updateUI() {
+        if (timerIds == null || timerIds.isEmpty()) {
+            timerLabel.setText("No timers available");
+            runningIndicator.setFill(javafx.scene.paint.Color.DARKGRAY);
+            lcdLine1.setText("No timers");
+            hornSymbol.setVisible(false);
+            return;
+        }
         String hornId = timerIds.get(currentTimerIndex) + "_Horn";
         ScoreIndicator horn = (ScoreIndicator) ruleEngine.getElement(hornId);
         ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(timerIds.get(currentTimerIndex));

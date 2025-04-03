@@ -62,5 +62,11 @@
       "minValue": 0,
       "maxValue": 99
     }
-  ]
+  ],
+  "uiConfig": {
+    "buttons": [
+      {"fxId": "button_0_0", "label": "Start"},
+	  {"fxId": "button_0_1", "label": "Stop"}
+    ]
+  }
 }
