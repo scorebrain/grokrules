@@ -11,7 +11,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import javafx.util.Duration;
+//import javafx.util.Duration;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,6 +21,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier; // Added import
+import java.time.Instant;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
 
 // Main application class
 public class App extends Application {
@@ -115,32 +122,36 @@ class ScoreEventBus {
 // ScoreTimer class
 class ScoreTimer implements ScoreElement {
     private String id;
-    private int initialSeconds;
-    private int currentSeconds;
+    private long initialValue; // Nanoseconds
+    private long currentValue; // Nanoseconds
     private boolean isRunning;
+    private Instant startTimeStamp;
     private ScoreEventBus eventBus;
-    private List<Integer> thresholds;
-    private Timeline timeline;
-    private int flashZoneThreshold;
+    private List<Integer> thresholds; // Seconds
+    private int flashZoneThreshold; // Seconds
     private String flashZonePattern;
+    private boolean expiredNotified; // Track if expiration was notified
 
     public ScoreTimer(ScoreEventBus eventBus) {
         this.eventBus = eventBus;
         this.thresholds = new ArrayList<>();
+        this.expiredNotified = false;
     }
 
     @Override
     public void initialize(JsonObject config) {
         this.id = config.get("id").getAsString();
-        this.initialSeconds = config.get("initialSeconds").getAsInt();
-        this.currentSeconds = initialSeconds;
+        this.initialValue = config.get("initialSeconds").getAsLong() * 1_000_000_000L;
+        this.currentValue = initialValue;
+        this.isRunning = false;
+        this.startTimeStamp = null;
+        this.expiredNotified = false;
         if (config.has("thresholds")) {
             JsonArray thresholdsArray = config.getAsJsonArray("thresholds");
             for (int i = 0; i < thresholdsArray.size(); i++) {
                 this.thresholds.add(thresholdsArray.get(i).getAsInt());
             }
         }
-        // Initialize Flash Zone attributes
         this.flashZoneThreshold = config.has("flashZoneThreshold") ? config.get("flashZoneThreshold").getAsInt() : -1;
         this.flashZonePattern = config.has("flashZonePattern") ? config.get("flashZonePattern").getAsString() : null;
     }
@@ -152,30 +163,20 @@ class ScoreTimer implements ScoreElement {
 
     public boolean startstop() {
         if (isRunning) {
-            if (timeline != null) {
-                timeline.pause();
-            }
+            currentValue = initialValue - Duration.between(startTimeStamp, Instant.now()).toNanos();
             isRunning = false;
+            startTimeStamp = null;
             eventBus.notifyTimerStopped(id);
-            if (currentSeconds <= 0) {
+            if (currentValue <= 0 && !expiredNotified) {
                 eventBus.notifyTimerExpired(id);
+                expiredNotified = true;
             }
         } else {
-            if (currentSeconds > 0) {
-                if (timeline == null) {
-                    timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
-                        currentSeconds--;
-                        checkThresholds();
-                        if (currentSeconds <= 0) {
-                            timeline.stop();
-                            isRunning = false;
-                            eventBus.notifyTimerExpired(id);
-                        }
-                    }));
-                    timeline.setCycleCount(Timeline.INDEFINITE);
-                }
-                timeline.play();
+            if (currentValue > 0) {
+                startTimeStamp = Instant.now();
+                initialValue = currentValue;
                 isRunning = true;
+                expiredNotified = false; // Reset expiration flag
                 eventBus.notifyTimerStarted(id);
             } else {
                 return false;
@@ -184,48 +185,86 @@ class ScoreTimer implements ScoreElement {
         return true;
     }
 
-    private void checkThresholds() {
+    public void checkThresholds() {
+        int currentSeconds = (int) (getCurrentValue() / 1_000_000_000L);
         for (int threshold : thresholds) {
             if (currentSeconds == threshold) {
                 eventBus.notifyThresholdCrossed(id, threshold);
             }
         }
+        if (currentSeconds <= 0 && isRunning && !expiredNotified) {
+            isRunning = false;
+            startTimeStamp = null;
+            currentValue = 0;
+            eventBus.notifyTimerExpired(id);
+            expiredNotified = true;
+        }
     }
 
     public void setValue(int seconds) {
-        this.currentSeconds = seconds;
+        this.currentValue = seconds * 1_000_000_000L;
+        if (!isRunning) {
+            this.initialValue = currentValue;
+        }
+        this.expiredNotified = false; // Reset on manual set
     }
 
     public void increment() {
-        this.currentSeconds++;
+        this.currentValue += 1_000_000_000L;
+        if (!isRunning) {
+            this.initialValue = currentValue;
+        }
+        this.expiredNotified = false;
     }
 
     public void decrement() {
-        if (this.currentSeconds > 0) this.currentSeconds--;
+        if (this.currentValue >= 1_000_000_000L) {
+            this.currentValue -= 1_000_000_000L;
+            if (!isRunning) {
+                this.initialValue = currentValue;
+            }
+            this.expiredNotified = false;
+        }
     }
 
     public boolean isRunning() {
         return isRunning;
     }
 
-    public int getCurrentValue() {
-        return currentSeconds;
+    public long getCurrentValue() {
+        if (isRunning && startTimeStamp != null) {
+            long elapsedNanos = Duration.between(startTimeStamp, Instant.now()).toNanos();
+            long remaining = initialValue - elapsedNanos;
+            return Math.max(0, remaining);
+        }
+        return currentValue;
     }
 
     @Override
     public String getDisplayValue() {
-        return String.format("%02d:%02d", currentSeconds / 60, currentSeconds % 60);
+        long nanos = getCurrentValue();
+        long totalSeconds = nanos / 1_000_000_000L;
+        if (totalSeconds >= 60) {
+            long minutes = totalSeconds / 60;
+            long seconds = totalSeconds % 60;
+            return String.format("%02d:%02d", minutes, seconds);
+        } else {
+            long seconds = totalSeconds;
+            long tenths = (nanos % 1_000_000_000L) / 100_000_000L;
+            return String.format("%02d.%d", seconds, tenths);
+        }
     }
 
     @Override
     public void reset() {
-        if (timeline != null) {
-            timeline.stop();
+        if (isRunning) {
+            startstop();
         }
-        currentSeconds = initialSeconds;
-        isRunning = false;
+        currentValue = initialValue;
+        startTimeStamp = null;
+        expiredNotified = false;
     }
-    
+
     public int getFlashZoneThreshold() {
         return flashZoneThreshold;
     }

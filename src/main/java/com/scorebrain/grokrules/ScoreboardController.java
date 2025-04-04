@@ -408,10 +408,9 @@ public class ScoreboardController implements Initializable {
             timerLabel.setText(timer.getDisplayValue());
             runningIndicator.setFill(timer.isRunning() ?
                 javafx.scene.paint.Color.RED : javafx.scene.paint.Color.DARKGRAY);
-            // Determine if the timer should flash
-            boolean shouldFlash = timer.isRunning() && timer.getCurrentValue() <= timer.getFlashZoneThreshold() && timer.getFlashZoneThreshold() >= 0;
+            timer.checkThresholds(); // Check thresholds and expiration every frame
+            boolean shouldFlash = timer.isRunning() && (timer.getCurrentValue() / 1_000_000_000L) <= timer.getFlashZoneThreshold() && timer.getFlashZoneThreshold() >= 0;
 
-            // Manage flashing state
             if (shouldFlash && !isFlashing) {
                 startFlashAnimation(timer);
                 isFlashing = true;
@@ -440,7 +439,7 @@ public class ScoreboardController implements Initializable {
             }
             lcdText += " *";
         }
-        if (timer != null && timer.isRunning() && timer.getCurrentValue() <= timer.getFlashZoneThreshold() && timer.getFlashZoneThreshold() >= 0) {
+        if (timer != null && timer.isRunning() && (timer.getCurrentValue() / 1_000_000_000L) <= timer.getFlashZoneThreshold() && timer.getFlashZoneThreshold() >= 0) {
             lcdText += " F";
         }
         lcdLine1.setText(lcdText);
