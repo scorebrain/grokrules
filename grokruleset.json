@@ -3,7 +3,13 @@
     {
       "type": "ScoreTimer",
       "id": "timerOne",
-      "initialSeconds": 60,
+      "initialSeconds": 15,
+      "isDownCounting": true,
+      "minValue": 5000000000,
+      "maxValue": 30000000000,
+      "rolloverValue": 20000000000,
+      "canRollUp": true,
+      "canRollDown": false,
       "thresholds": [10],
       "flashZoneThreshold": 10,
       "flashZonePattern": "500:true,500:false"
@@ -20,6 +26,12 @@
       "type": "ScoreTimer",
       "id": "timerTwo",
       "initialSeconds": 120,
+      "isDownCounting": false,
+      "minValue": 0,
+      "maxValue": 59999990000000,
+      "rolloverValue": 35999990000000,
+      "canRollUp": false,
+      "canRollDown": false,
       "thresholds": [20],
       "flashZoneThreshold": 25,
       "flashZonePattern": "200:true,200:false"
@@ -36,6 +48,12 @@
       "type": "ScoreTimer",
       "id": "timerThree",
       "initialSeconds": 30,
+      "isDownCounting": true,
+      "minValue": 0,
+      "maxValue": 59999990000000,
+      "rolloverValue": 35999990000000,
+      "canRollUp": false,
+      "canRollDown": false,
       "thresholds": [5],
       "flashZoneThreshold": 30,
       "flashZonePattern": "200:true,200:false,600:true,200:false"
@@ -66,7 +84,7 @@
   "uiConfig": {
     "buttons": [
       {"fxId": "button_0_0", "label": "Start", "action": "start", "target": "timerOne"},
-	  {"fxId": "button_0_1", "label": "Stop", "action": "stop", "target": "timerOne"}
+      {"fxId": "button_0_1", "label": "Stop", "action": "stop", "target": "timerOne"}
     ]
   }
 }

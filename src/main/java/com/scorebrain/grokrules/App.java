@@ -130,7 +130,13 @@ class ScoreTimer implements ScoreElement {
     private List<Integer> thresholds; // Seconds
     private int flashZoneThreshold; // Seconds
     private String flashZonePattern;
-    private boolean expiredNotified; // Track if expiration was notified
+    private boolean expiredNotified;
+    private boolean isDownCounting;
+    private long minValue; // Nanoseconds
+    private long maxValue; // Nanoseconds
+    private long rolloverValue; // Nanoseconds
+    private boolean canRollUp;
+    private boolean canRollDown;
 
     public ScoreTimer(ScoreEventBus eventBus) {
         this.eventBus = eventBus;
@@ -146,6 +152,12 @@ class ScoreTimer implements ScoreElement {
         this.isRunning = false;
         this.startTimeStamp = null;
         this.expiredNotified = false;
+        this.isDownCounting = config.has("isDownCounting") ? config.get("isDownCounting").getAsBoolean() : true;
+        this.minValue = config.has("minValue") ? config.get("minValue").getAsLong() : 0L;
+        this.maxValue = config.has("maxValue") ? config.get("maxValue").getAsLong() : 59999990000000L;
+        this.rolloverValue = config.has("rolloverValue") ? config.get("rolloverValue").getAsLong() : 35999990000000L;
+        this.canRollUp = config.has("canRollUp") ? config.get("canRollUp").getAsBoolean() : false;
+        this.canRollDown = config.has("canRollDown") ? config.get("canRollDown").getAsBoolean() : false;
         if (config.has("thresholds")) {
             JsonArray thresholdsArray = config.getAsJsonArray("thresholds");
             for (int i = 0; i < thresholdsArray.size(); i++) {
@@ -163,20 +175,29 @@ class ScoreTimer implements ScoreElement {
 
     public boolean startstop() {
         if (isRunning) {
-            currentValue = initialValue - Duration.between(startTimeStamp, Instant.now()).toNanos();
+            currentValue = getCurrentValueRaw();
             isRunning = false;
             startTimeStamp = null;
             eventBus.notifyTimerStopped(id);
-            if (currentValue <= 0 && !expiredNotified) {
+            if (isDownCounting && currentValue <= minValue && !expiredNotified) {
+                eventBus.notifyTimerExpired(id);
+                expiredNotified = true;
+            } else if (!isDownCounting && currentValue >= maxValue && !expiredNotified) {
                 eventBus.notifyTimerExpired(id);
                 expiredNotified = true;
             }
         } else {
-            if (currentValue > 0) {
+            if (isDownCounting && currentValue > minValue) {
                 startTimeStamp = Instant.now();
                 initialValue = currentValue;
                 isRunning = true;
-                expiredNotified = false; // Reset expiration flag
+                expiredNotified = false;
+                eventBus.notifyTimerStarted(id);
+            } else if (!isDownCounting && currentValue < maxValue) {
+                startTimeStamp = Instant.now();
+                initialValue = currentValue;
+                isRunning = true;
+                expiredNotified = false;
                 eventBus.notifyTimerStarted(id);
             } else {
                 return false;
@@ -192,34 +213,56 @@ class ScoreTimer implements ScoreElement {
                 eventBus.notifyThresholdCrossed(id, threshold);
             }
         }
-        if (currentSeconds <= 0 && isRunning && !expiredNotified) {
+        long currentValue = getCurrentValue();
+        if (isDownCounting && currentValue <= minValue && isRunning && !expiredNotified) {
             isRunning = false;
             startTimeStamp = null;
-            currentValue = 0;
+            this.currentValue = minValue;
             eventBus.notifyTimerExpired(id);
             expiredNotified = true;
+        } else if (!isDownCounting && isRunning) {
+            if (currentValue >= rolloverValue && currentValue < maxValue && canRollUp) {
+                // Rollover to minValue when reaching rolloverValue
+                long elapsedSinceStart = currentValue - initialValue;
+                long cycleLength = rolloverValue - minValue;
+                long cyclesCompleted = (elapsedSinceStart / cycleLength) + 1;
+                initialValue = minValue;
+                startTimeStamp = Instant.now().minusNanos(elapsedSinceStart % cycleLength);
+                currentValue = getCurrentValueRaw();
+            } else if (currentValue >= maxValue && !expiredNotified) {
+                isRunning = false;
+                startTimeStamp = null;
+                this.currentValue = maxValue;
+                eventBus.notifyTimerExpired(id);
+                expiredNotified = true;
+            }
         }
     }
 
     public void setValue(int seconds) {
-        this.currentValue = seconds * 1_000_000_000L;
-        if (!isRunning) {
-            this.initialValue = currentValue;
-        }
-        this.expiredNotified = false; // Reset on manual set
-    }
-
-    public void increment() {
-        this.currentValue += 1_000_000_000L;
+        long newValue = seconds * 1_000_000_000L;
+        this.currentValue = Math.max(minValue, Math.min(maxValue, newValue));
         if (!isRunning) {
             this.initialValue = currentValue;
         }
         this.expiredNotified = false;
     }
 
+    public void increment() {
+        long newValue = currentValue + 1_000_000_000L;
+        if (newValue <= maxValue) {
+            this.currentValue = newValue;
+            if (!isRunning) {
+                this.initialValue = currentValue;
+            }
+            this.expiredNotified = false;
+        }
+    }
+
     public void decrement() {
-        if (this.currentValue >= 1_000_000_000L) {
-            this.currentValue -= 1_000_000_000L;
+        long newValue = currentValue - 1_000_000_000L;
+        if (newValue >= minValue) {
+            this.currentValue = newValue;
             if (!isRunning) {
                 this.initialValue = currentValue;
             }
@@ -231,13 +274,26 @@ class ScoreTimer implements ScoreElement {
         return isRunning;
     }
 
-    public long getCurrentValue() {
+    private long getCurrentValueRaw() {
         if (isRunning && startTimeStamp != null) {
             long elapsedNanos = Duration.between(startTimeStamp, Instant.now()).toNanos();
-            long remaining = initialValue - elapsedNanos;
-            return Math.max(0, remaining);
+            if (isDownCounting) {
+                long remaining = initialValue - elapsedNanos;
+                if (remaining <= minValue) {
+                    return canRollDown ? rolloverValue : minValue;
+                }
+                return remaining;
+            } else {
+                long elapsed = initialValue + elapsedNanos;
+                return elapsed;
+            }
         }
         return currentValue;
+    }
+
+    public long getCurrentValue() {
+        long rawValue = getCurrentValueRaw();
+        return Math.max(minValue, Math.min(maxValue, rawValue));
     }
 
     @Override
