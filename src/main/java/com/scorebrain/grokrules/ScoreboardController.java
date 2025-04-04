@@ -130,9 +130,11 @@ public class ScoreboardController implements Initializable {
             for (JsonElement btn : buttons) {
                 JsonObject btnConfig = btn.getAsJsonObject();
                 String fxId = btnConfig.get("fxId").getAsString();
+                buttonConfigs.put(fxId, btnConfig); // Store config for handleGridButton
                 Button button = (Button) root.lookup("#" + fxId);
                 if (button != null) {
                     button.setText(btnConfig.get("label").getAsString());
+                    System.out.println("Labeled button " + fxId + " as '" + btnConfig.get("label").getAsString() + "'");
                 } else {
                     System.out.println("Button with fx:id '" + fxId + "' not found.");
                 }
@@ -151,14 +153,30 @@ public class ScoreboardController implements Initializable {
         Button button = (Button) event.getSource();
         String fxId = button.getId();
         JsonObject config = buttonConfigs.get(fxId);
+        System.out.println("Clicked button: " + fxId);
         if (config != null) {
-            String action = config.get("action").getAsString();
-            String target = config.get("target").getAsString();
+            String action = config.has("action") ? config.get("action").getAsString() : "none";
+            String target = config.has("target") ? config.get("target").getAsString() : "none";
+            System.out.println("Action: " + action + ", Target: " + target);
             ScoreElement element = ruleEngine.getElement(target);
             if (element instanceof ScoreCounter counter && "increment".equals(action)) {
-                counter.increment(config.get("amount").getAsInt());
-                updateUI();
+                if (config.has("amount")) {
+                    counter.increment(config.get("amount").getAsInt());
+                    updateUI();
+                } else {
+                    System.out.println("No 'amount' specified for increment action");
+                }
+            } else if (element instanceof ScoreTimer timer) {
+                if ("start".equals(action) && !timer.isRunning()) {
+                    timer.startstop();
+                    updateUI();
+                } else if ("stop".equals(action) && timer.isRunning()) {
+                    timer.startstop();
+                    updateUI();
+                }
             }
+        } else {
+            System.out.println("No config found for button " + fxId);
         }
     }
     

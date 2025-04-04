@@ -65,8 +65,8 @@
   ],
   "uiConfig": {
     "buttons": [
-      {"fxId": "button_0_0", "label": "Start"},
-	  {"fxId": "button_0_1", "label": "Stop"}
+      {"fxId": "button_0_0", "label": "Start", "action": "start", "target": "timerOne"},
+	  {"fxId": "button_0_1", "label": "Stop", "action": "stop", "target": "timerOne"}
     ]
   }
 }

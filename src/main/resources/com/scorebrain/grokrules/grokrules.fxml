@@ -41,10 +41,10 @@
     
     <HBox spacing="20" alignment="CENTER">
         <GridPane fx:id="buttonGrid" hgap="10" vgap="10" alignment="CENTER">
-            <Button fx:id="button_0_0" text="" onAction="#handleGridButton" style="-fx-pref-width: 60; -fx-pref-height: 40;"/>
-            <Button fx:id="button_0_1" text="" onAction="#handleGridButton" style="-fx-pref-width: 60; -fx-pref-height: 40;"/>
-            <Button fx:id="button_1_0" text="" onAction="#handleGridButton" style="-fx-pref-width: 60; -fx-pref-height: 40;"/>
-            <Button fx:id="button_1_1" text="" onAction="#handleGridButton" style="-fx-pref-width: 60; -fx-pref-height: 40;"/>
+            <Button fx:id="button_0_0" text="" onAction="#handleGridButton" style="-fx-pref-width: 60; -fx-pref-height: 40;" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <Button fx:id="button_0_1" text="" onAction="#handleGridButton" style="-fx-pref-width: 60; -fx-pref-height: 40;" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+            <Button fx:id="button_1_0" text="" onAction="#handleGridButton" style="-fx-pref-width: 60; -fx-pref-height: 40;" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <Button fx:id="button_1_1" text="" onAction="#handleGridButton" style="-fx-pref-width: 60; -fx-pref-height: 40;" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
         </GridPane>
         <!-- Guest Points buttons -->
         <VBox spacing="10" alignment="CENTER_LEFT">
