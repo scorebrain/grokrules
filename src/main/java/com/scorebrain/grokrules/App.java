@@ -131,12 +131,13 @@ class ScoreTimer implements ScoreElement {
     private int flashZoneThreshold; // Seconds
     private String flashZonePattern;
     private boolean expiredNotified;
-    private boolean isDownCounting;
+    private boolean isUpCounting;  // Refactored from isDownCounting
     private long minValue; // Nanoseconds
     private long maxValue; // Nanoseconds
     private long rolloverValue; // Nanoseconds
     private boolean canRollUp;
     private boolean canRollDown;
+    private boolean allowShift;  // New attribute
 
     public ScoreTimer(ScoreEventBus eventBus) {
         this.eventBus = eventBus;
@@ -152,7 +153,8 @@ class ScoreTimer implements ScoreElement {
         this.isRunning = false;
         this.startTimeStamp = null;
         this.expiredNotified = false;
-        this.isDownCounting = config.has("isDownCounting") ? config.get("isDownCounting").getAsBoolean() : true;
+        this.isUpCounting = config.has("isUpCounting") ? config.get("isUpCounting").getAsBoolean() : false;  // Default false (down)
+        this.allowShift = config.has("allowShift") ? config.get("allowShift").getAsBoolean() : true;  // Default true
         this.minValue = config.has("minValue") ? config.get("minValue").getAsLong() : 0L;
         this.maxValue = config.has("maxValue") ? config.get("maxValue").getAsLong() : 59999990000000L;
         this.rolloverValue = config.has("rolloverValue") ? config.get("rolloverValue").getAsLong() : 35999990000000L;
@@ -179,21 +181,21 @@ class ScoreTimer implements ScoreElement {
             isRunning = false;
             startTimeStamp = null;
             eventBus.notifyTimerStopped(id);
-            if (isDownCounting && currentValue <= minValue && !expiredNotified) {
+            if (!isUpCounting && currentValue <= minValue && !expiredNotified) {  // Reversed logic
                 eventBus.notifyTimerExpired(id);
                 expiredNotified = true;
-            } else if (!isDownCounting && currentValue >= maxValue && !expiredNotified) {
+            } else if (isUpCounting && currentValue >= maxValue && !expiredNotified) {
                 eventBus.notifyTimerExpired(id);
                 expiredNotified = true;
             }
         } else {
-            if (isDownCounting && currentValue > minValue) {
+            if (!isUpCounting && currentValue > minValue) {  // Reversed logic
                 startTimeStamp = Instant.now();
                 initialValue = currentValue;
                 isRunning = true;
                 expiredNotified = false;
                 eventBus.notifyTimerStarted(id);
-            } else if (!isDownCounting && currentValue < maxValue) {
+            } else if (isUpCounting && currentValue < maxValue) {
                 startTimeStamp = Instant.now();
                 initialValue = currentValue;
                 isRunning = true;
@@ -214,15 +216,14 @@ class ScoreTimer implements ScoreElement {
             }
         }
         long currentValue = getCurrentValue();
-        if (isDownCounting && currentValue <= minValue && isRunning && !expiredNotified) {
+        if (!isUpCounting && currentValue <= minValue && isRunning && !expiredNotified) {  // Reversed logic
             isRunning = false;
             startTimeStamp = null;
             this.currentValue = minValue;
             eventBus.notifyTimerExpired(id);
             expiredNotified = true;
-        } else if (!isDownCounting && isRunning) {
+        } else if (isUpCounting && isRunning) {
             if (currentValue >= rolloverValue && currentValue < maxValue && canRollUp) {
-                // Rollover to minValue when reaching rolloverValue
                 long elapsedSinceStart = currentValue - initialValue;
                 long cycleLength = rolloverValue - minValue;
                 long cyclesCompleted = (elapsedSinceStart / cycleLength) + 1;
@@ -276,7 +277,7 @@ class ScoreTimer implements ScoreElement {
     private long getCurrentValueRaw() {
         if (isRunning && startTimeStamp != null) {
             long elapsedNanos = Duration.between(startTimeStamp, Instant.now()).toNanos();
-            if (isDownCounting) {
+            if (!isUpCounting) {  // Reversed logic
                 long remaining = initialValue - elapsedNanos;
                 if (remaining <= minValue) {
                     return canRollDown ? rolloverValue : minValue;
@@ -303,10 +304,13 @@ class ScoreTimer implements ScoreElement {
             long minutes = totalSeconds / 60;
             long seconds = totalSeconds % 60;
             return String.format("%02d:%02d", minutes, seconds);
-        } else {
+        } else if (allowShift) {  // Use allowShift to show tenths
             long seconds = totalSeconds;
             long tenths = (nanos % 1_000_000_000L) / 100_000_000L;
             return String.format("%02d.%d", seconds, tenths);
+        } else {
+            long seconds = totalSeconds;
+            return String.format("%02d", seconds);  // No tenths if allowShift is false
         }
     }
 
@@ -334,6 +338,22 @@ class ScoreTimer implements ScoreElement {
     
     public Long getMaxValue() {
         return maxValue;
+    }
+
+    public boolean getAllowShift() {
+        return allowShift;
+    }
+
+    public void setAllowShift(boolean value) {
+        this.allowShift = value;
+    }
+
+    public boolean getIsUpCounting() {
+        return isUpCounting;
+    }
+
+    public void setIsUpCounting(boolean value) {
+        this.isUpCounting = value;
     }
 }
 

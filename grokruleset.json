@@ -4,7 +4,8 @@
       "type": "ScoreTimer",
       "id": "timerOne",
       "initialSeconds": 15,
-      "isDownCounting": true,
+      "isUpCounting": false,  // Was isDownCounting: true
+      "allowShift": true,
       "minValue": 0,
       "maxValue": 5940000000000,
       "rolloverValue": 20000000000,
@@ -26,7 +27,8 @@
       "type": "ScoreTimer",
       "id": "timerTwo",
       "initialSeconds": 120,
-      "isDownCounting": false,
+      "isUpCounting": true,  // Was isDownCounting: false
+      "allowShift": true,
       "minValue": 0,
       "maxValue": 59999990000000,
       "rolloverValue": 35999990000000,
@@ -48,7 +50,8 @@
       "type": "ScoreTimer",
       "id": "timerThree",
       "initialSeconds": 30,
-      "isDownCounting": true,
+      "isUpCounting": false,  // Was isDownCounting: true
+      "allowShift": true,
       "minValue": 0,
       "maxValue": 59999990000000,
       "rolloverValue": 35999990000000,
@@ -85,8 +88,10 @@
     "buttons": [
       {"fxId": "button_0_0", "label": "Start", "action": "start", "target": "timerOne"},
       {"fxId": "button_0_1", "label": "Stop", "action": "stop", "target": "timerOne"},
-      {"fxId": "button_1_0", "label": "Min Set", "action": "set", "target": "timerOne", "minutesPrompt": "SET TM1  <MM:SS>"},
-      {"fxId": "button_1_1", "label": "Sec Set", "action": "set", "target": "timerOne", "secondsPrompt": "SET TM1   <SS.t>"}
+      {"fxId": "button_1_0", "label": "Min Set", "action": "setCurrentValue", "target": "timerOne", "minutesPrompt": "SET TM1  <MM:SS>"},
+      {"fxId": "button_1_1", "label": "Sec Set", "action": "setCurrentValue", "target": "timerOne", "secondsPrompt": "SET TM1   <SS.t>"},
+      {"fxId": "button_2_0", "label": "0.1 Sec", "action": "setAllowShift", "target": "timerOne", "promptLine1": " 1/10TH SECOND  ", "promptLine2": "1=YES  0=NO  <b>"},
+      {"fxId": "button_2_1", "label": "Up/Down", "action": "setIsUpCounting", "target": "timerOne", "promptLine1": "COUNT UP OR DOWN", "promptLine2": "1=UP 0=DOWN  <b>"}
     ]
   }
 }
