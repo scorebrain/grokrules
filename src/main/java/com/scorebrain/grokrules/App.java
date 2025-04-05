@@ -122,22 +122,23 @@ class ScoreEventBus {
 // ScoreTimer class
 class ScoreTimer implements ScoreElement {
     private String id;
-    private long initialValue; // Nanoseconds
-    private long currentValue; // Nanoseconds
+    private long initialValue;
+    private long currentValue;
     private boolean isRunning;
     private Instant startTimeStamp;
     private ScoreEventBus eventBus;
-    private List<Integer> thresholds; // Seconds
-    private int flashZoneThreshold; // Seconds
+    private List<Integer> thresholds;
+    private int flashZoneThreshold;
     private String flashZonePattern;
     private boolean expiredNotified;
-    private boolean isUpCounting;  // Refactored from isDownCounting
-    private long minValue; // Nanoseconds
-    private long maxValue; // Nanoseconds
-    private long rolloverValue; // Nanoseconds
+    private boolean isUpCounting;
+    private long minValue;
+    private long maxValue;
+    private long rolloverValue;
     private boolean canRollUp;
     private boolean canRollDown;
-    private boolean allowShift;  // New attribute
+    private boolean allowShift;
+    private String constrainWhen; // New field
 
     public ScoreTimer(ScoreEventBus eventBus) {
         this.eventBus = eventBus;
@@ -148,13 +149,13 @@ class ScoreTimer implements ScoreElement {
     @Override
     public void initialize(JsonObject config) {
         this.id = config.get("id").getAsString();
-        this.initialValue = config.get("initialSeconds").getAsLong() * 1_000_000_000L;
+        this.initialValue = config.get("initialValue").getAsLong(); // Changed from initialSeconds
         this.currentValue = initialValue;
         this.isRunning = false;
         this.startTimeStamp = null;
         this.expiredNotified = false;
-        this.isUpCounting = config.has("isUpCounting") ? config.get("isUpCounting").getAsBoolean() : false;  // Default false (down)
-        this.allowShift = config.has("allowShift") ? config.get("allowShift").getAsBoolean() : true;  // Default true
+        this.isUpCounting = config.has("isUpCounting") ? config.get("isUpCounting").getAsBoolean() : false;
+        this.allowShift = config.has("allowShift") ? config.get("allowShift").getAsBoolean() : true;
         this.minValue = config.has("minValue") ? config.get("minValue").getAsLong() : 0L;
         this.maxValue = config.has("maxValue") ? config.get("maxValue").getAsLong() : 59999990000000L;
         this.rolloverValue = config.has("rolloverValue") ? config.get("rolloverValue").getAsLong() : 35999990000000L;
@@ -168,6 +169,48 @@ class ScoreTimer implements ScoreElement {
         }
         this.flashZoneThreshold = config.has("flashZoneThreshold") ? config.get("flashZoneThreshold").getAsInt() : -1;
         this.flashZonePattern = config.has("flashZonePattern") ? config.get("flashZonePattern").getAsString() : null;
+        this.constrainWhen = config.has("constrainWhen") ? config.get("constrainWhen").getAsString() : null;
+
+        enforceConstraints(); // Apply constraints after initialization
+    }
+
+    private void enforceConstraints() {
+        if (constrainWhen != null) {
+            String[] parts = constrainWhen.split("->");
+            if (parts.length == 2) {
+                String condition = parts[0].trim();
+                String action = parts[1].trim();
+                if (evaluateCondition(condition)) {
+                    String[] actionParts = action.split("=");
+                    if (actionParts.length == 2) {
+                        String attr = actionParts[0].trim();
+                        String value = actionParts[1].trim();
+                        if (attr.equals("allowShift")) {
+                            boolean newValue = Boolean.parseBoolean(value);
+                            if (this.allowShift != newValue) {
+                                System.out.println("Warning: Constraint '" + constrainWhen + "' overrides initial allowShift value for " + id);
+                                this.allowShift = newValue;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean evaluateCondition(String condition) {
+        String[] conditionParts = condition.split("==");
+        if (conditionParts.length != 2) return false;
+        String attr = conditionParts[0].trim();
+        String value = conditionParts[1].trim();
+        switch (attr) {
+            case "isUpCounting":
+                return this.isUpCounting == Boolean.parseBoolean(value);
+            case "allowShift":
+                return this.allowShift == Boolean.parseBoolean(value);
+            default:
+                return false;
+        }
     }
 
     @Override
@@ -346,6 +389,7 @@ class ScoreTimer implements ScoreElement {
 
     public void setAllowShift(boolean value) {
         this.allowShift = value;
+        enforceConstraints(); // Re-check constraints
     }
 
     public boolean getIsUpCounting() {
@@ -354,6 +398,7 @@ class ScoreTimer implements ScoreElement {
 
     public void setIsUpCounting(boolean value) {
         this.isUpCounting = value;
+        enforceConstraints(); // Re-check constraints
     }
 }
 
