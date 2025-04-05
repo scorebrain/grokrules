@@ -327,6 +327,14 @@ class ScoreTimer implements ScoreElement {
     public String getFlashZonePattern() {
         return flashZonePattern;
     }
+    
+    public Long getMinValue() {
+        return minValue;
+    }
+    
+    public Long getMaxValue() {
+        return maxValue;
+    }
 }
 
 // ScoreIndicator class
@@ -477,6 +485,14 @@ class ScoreCounter implements ScoreElement {
 
     public int getCurrentValue() {
         return currentValue;
+    }
+    
+    public int getMinValue() {
+        return minValue;
+    }
+    
+    public int getMaxValue() {
+        return maxValue;
     }
 }
 

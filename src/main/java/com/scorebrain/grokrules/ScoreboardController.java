@@ -37,6 +37,7 @@ public class ScoreboardController implements Initializable {
     private JsonObject currentButtonConfig = null; // Track current set button config
     private Map<String, JsonObject> buttonConfigs = new HashMap<>();
     private Parent root;
+    private boolean isInitialPrompt = false; // Track if showing initial value
 
     @FXML private Label timerLabel;
     @FXML private Label lcdLine1;
@@ -114,37 +115,75 @@ public class ScoreboardController implements Initializable {
             String target = config.has("target") ? config.get("target").getAsString() : "none";
             System.out.println("Action: " + action + ", Target: " + target);
             ScoreElement element = ruleEngine.getElement(target);
-            if (element instanceof ScoreCounter counter && "increment".equals(action)) {
-                if (config.has("amount")) {
-                    counter.increment(config.get("amount").getAsInt());
-                    updateUI();
+
+            if (settingMode) {
+                if (action.equals("set")) {
+                    // Different-target set button: abort current set, don’t start new set
+                    abortSetFunction();
+                    return;
+                } else if (target.equals(settingTimerId) || target.equals(settingCounterId)) {
+                    // Same-target non-set button: abort set, execute new action
+                    abortSetFunction();
                 } else {
-                    System.out.println("No 'amount' specified for increment action");
-                }
-            } else if (element instanceof ScoreCounter counter && "decrement".equals(action)) {
-                if (config.has("amount")) {
-                    counter.decrement(config.get("amount").getAsInt());
-                    updateUI();
-                } else {
-                    System.out.println("No 'amount' specified for decrement action");
-                }
-            } else if (element instanceof ScoreTimer timer) {
-                if ("start".equals(action) && !timer.isRunning()) {
-                    timer.startstop();
-                    updateUI();
-                } else if ("stop".equals(action) && timer.isRunning()) {
-                    timer.startstop();
-                    updateUI();
-                } else if ("set".equals(action) && !timer.isRunning()) {
-                    settingMode = true;
-                    settingTimerId = target;
-                    currentButtonConfig = config;
-                    inputBuffer.setLength(0);
-                    displayInitialPrompt(timer);
+                    // Different-target non-set button: execute and continue set
+                    executeNonSetAction(element, action, config);
+                    return; // Continue set mode
                 }
             }
+
+            executeAction(element, action, config, target);
         } else {
             System.out.println("No config found for button " + fxId);
+        }
+    }
+
+    private void executeNonSetAction(ScoreElement element, String action, JsonObject config) {
+        if (element instanceof ScoreCounter counter) {
+            if ("increment".equals(action) && config.has("amount")) {
+                counter.increment(config.get("amount").getAsInt());
+            } else if ("decrement".equals(action) && config.has("amount")) {
+                counter.decrement(config.get("amount").getAsInt());
+            }
+        } else if (element instanceof ScoreTimer timer) {
+            if ("start".equals(action) && !timer.isRunning()) {
+                timer.startstop();
+            } else if ("stop".equals(action) && timer.isRunning()) {
+                timer.startstop();
+            }
+        }
+        updateUI();
+    }
+
+    private void executeAction(ScoreElement element, String action, JsonObject config, String target) {
+        if (element instanceof ScoreCounter counter && "increment".equals(action)) {
+            if (config.has("amount")) {
+                counter.increment(config.get("amount").getAsInt());
+                updateUI();
+            } else {
+                System.out.println("No 'amount' specified for increment action");
+            }
+        } else if (element instanceof ScoreCounter counter && "decrement".equals(action)) {
+            if (config.has("amount")) {
+                counter.decrement(config.get("amount").getAsInt());
+                updateUI();
+            } else {
+                System.out.println("No 'amount' specified for decrement action");
+            }
+        } else if (element instanceof ScoreTimer timer) {
+            if ("start".equals(action) && !timer.isRunning()) {
+                timer.startstop();
+                updateUI();
+            } else if ("stop".equals(action) && timer.isRunning()) {
+                timer.startstop();
+                updateUI();
+            } else if ("set".equals(action) && !timer.isRunning()) {
+                settingMode = true;
+                settingTimerId = target;
+                currentButtonConfig = config;
+                inputBuffer.setLength(0);
+                isInitialPrompt = true;
+                displayInitialPrompt(timer);
+            }
         }
     }
 
@@ -155,7 +194,7 @@ public class ScoreboardController implements Initializable {
             long totalSeconds = nanos / 1_000_000_000L;
             long tenths = (nanos % 1_000_000_000L) / 100_000_000L;
             long minutes = totalSeconds / 60;
-            long seconds = totalSeconds % 60;
+            long seconds = totalSeconds % 60; // Remainder for SS.t
 
             StringBuilder display = new StringBuilder();
             int bracketStart = prompt.indexOf('<');
@@ -166,7 +205,7 @@ public class ScoreboardController implements Initializable {
             if (format.equals("MM:SS")) {
                 display.append(String.format("%02d:%02d", minutes, seconds));
             } else if (format.equals("SS.t")) {
-                display.append(String.format("%02d.%d", totalSeconds, tenths));
+                display.append(String.format("%02d.%d", seconds, tenths)); // Show seconds remainder only
             }
             display.append(">"); // Closing bracket
             lcdLine2.setText(display.toString());
@@ -191,6 +230,7 @@ public class ScoreboardController implements Initializable {
         String prompt = getPromptString(currentButtonConfig);
         if (prompt == null) return;
 
+        isInitialPrompt = false; // User has started input
         int bracketStart = prompt.indexOf('<');
         int bracketEnd = prompt.indexOf('>');
         String format = prompt.substring(bracketStart + 1, bracketEnd);
@@ -225,23 +265,26 @@ public class ScoreboardController implements Initializable {
     @FXML
     private void handleBackClick(ActionEvent event) {
         if (!settingMode) return;
-        if (inputBuffer.length() == 0) {
-            settingMode = false;
-            settingTimerId = null;
-            currentButtonConfig = null;
-            resetUI();
+        if (isInitialPrompt || inputBuffer.length() == 0) {
+            abortSetFunction();
         } else {
-            inputBuffer.deleteCharAt(inputBuffer.length() - 1);
             String prompt = getPromptString(currentButtonConfig);
-            StringBuilder display = new StringBuilder();
             int bracketStart = prompt.indexOf('<');
             int bracketEnd = prompt.indexOf('>');
-            display.append(prompt.substring(0, bracketStart + 1)); // Literal prefix + "<"
             String format = prompt.substring(bracketStart + 1, bracketEnd);
             int digitCount = 0;
             for (char c : format.toCharArray()) {
                 if (Character.isLetter(c)) digitCount++;
             }
+
+            // Remove the rightmost digit and shift left, padding left with blank
+            inputBuffer.deleteCharAt(inputBuffer.length() - 1); // Remove least significant digit
+            while (inputBuffer.length() < digitCount) {
+                inputBuffer.insert(0, " "); // Pad left with blanks
+            }
+
+            StringBuilder display = new StringBuilder();
+            display.append(prompt.substring(0, bracketStart + 1)); // Literal prefix + "<"
             int inputIndex = 0;
             for (char c : format.toCharArray()) {
                 if (Character.isLetter(c)) {
@@ -258,7 +301,11 @@ public class ScoreboardController implements Initializable {
 
     @FXML
     private void handleEnter(ActionEvent event) {
-        if (!settingMode || inputBuffer.length() == 0) return;
+        if (!settingMode) return;
+        if (isInitialPrompt || inputBuffer.length() == 0) {
+            abortSetFunction();
+            return;
+        }
         try {
             String prompt = getPromptString(currentButtonConfig);
             int bracketStart = prompt.indexOf('<');
@@ -267,11 +314,16 @@ public class ScoreboardController implements Initializable {
             long nanos = parseInput(format, inputBuffer.toString().trim());
             if (settingCounterId != null) {
                 ScoreCounter counter = (ScoreCounter) ruleEngine.getElement(settingCounterId);
-                counter.setCurrentValue((int) (nanos / 1_000_000_000L)); // Convert to seconds for counters
+                int seconds = (int) (nanos / 1_000_000_000L);
+                if (seconds >= counter.getMinValue() && seconds <= counter.getMaxValue()) {
+                    counter.setCurrentValue(seconds);
+                }
                 settingCounterId = null;
             } else if (settingTimerId != null) {
                 ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(settingTimerId);
-                timer.setValue(nanos);
+                if (nanos >= timer.getMinValue() && nanos <= timer.getMaxValue()) {
+                    timer.setValue(nanos);
+                }
                 settingTimerId = null;
             }
             settingMode = false;
@@ -284,17 +336,27 @@ public class ScoreboardController implements Initializable {
         }
     }
 
+    private void abortSetFunction() {
+        settingMode = false;
+        settingTimerId = null;
+        settingCounterId = null;
+        currentButtonConfig = null;
+        isInitialPrompt = false;
+        inputBuffer.setLength(0);
+        buttonPlusOne.setDisable(false);
+        buttonMinusOne.setDisable(false);
+        resetUI();
+    }
+
     private long parseInput(String format, String input) {
         long nanos = 0;
         input = input.replaceAll("\\s", ""); // Remove spaces
         if (format.equals("MM:SS")) {
-            // Expect 4 digits: MMSS
             String paddedInput = String.format("%4s", input).replace(' ', '0');
             int minutes = Integer.parseInt(paddedInput.substring(0, 2));
             int seconds = Integer.parseInt(paddedInput.substring(2, 4));
-            nanos = (minutes * 60L + seconds) * 1_000_000_000L;
+            nanos = (minutes * 60L + seconds) * 1_000_000_000L; // Keeps "1:60" as 120s
         } else if (format.equals("SS.t")) {
-            // Expect 3 digits: SSt
             String paddedInput = String.format("%3s", input).replace(' ', '0');
             int seconds = Integer.parseInt(paddedInput.substring(0, 2));
             int tenths = Integer.parseInt(paddedInput.substring(2, 3));
@@ -304,79 +366,57 @@ public class ScoreboardController implements Initializable {
     }
 
     @FXML
-    private void handleGuestPlusOne() {
-        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("guestPoints");
-        counter.increment(1);
+    private void handleGuestPlusOne() { executeCounterAction("guestPoints", "increment", 1); }
+    @FXML
+    private void handleGuestPlusTwo() { executeCounterAction("guestPoints", "increment", 2); }
+    @FXML
+    private void handleGuestPlusSix() { executeCounterAction("guestPoints", "increment", 6); }
+    @FXML
+    private void handleGuestMinusOne() { executeCounterAction("guestPoints", "decrement", 1); }
+    @FXML
+    private void handleGuestSetPoints() { startCounterSet("guestPoints", "ENTER GUEST POINTS: "); }
+
+    @FXML
+    private void handleHomePlusOne() { executeCounterAction("homePoints", "increment", 1); }
+    @FXML
+    private void handleHomePlusTwo() { executeCounterAction("homePoints", "increment", 2); }
+    @FXML
+    private void handleHomePlusSix() { executeCounterAction("homePoints", "increment", 6); }
+    @FXML
+    private void handleHomeMinusOne() { executeCounterAction("homePoints", "decrement", 1); }
+    @FXML
+    private void handleHomeSetPoints() { startCounterSet("homePoints", "ENTER HOME POINTS: "); }
+
+    private void executeCounterAction(String target, String action, int amount) {
+        if (settingMode && (target.equals(settingCounterId) || target.equals(settingTimerId))) {
+            abortSetFunction();
+        }
+        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement(target);
+        if ("increment".equals(action)) {
+            counter.increment(amount);
+        } else if ("decrement".equals(action)) {
+            counter.decrement(amount);
+        }
         updateUI();
     }
 
-    @FXML
-    private void handleGuestPlusTwo() {
-        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("guestPoints");
-        counter.increment(2);
-        updateUI();
-    }
-
-    @FXML
-    private void handleGuestPlusSix() {
-        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("guestPoints");
-        counter.increment(6);
-        updateUI();
-    }
-
-    @FXML
-    private void handleGuestMinusOne() {
-        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("guestPoints");
-        counter.decrement(1);
-        updateUI();
-    }
-
-    @FXML
-    private void handleGuestSetPoints() {
+    private void startCounterSet(String target, String prompt) {
+        if (settingMode) {
+            abortSetFunction();
+            return;
+        }
         settingMode = true;
-        settingCounterId = "guestPoints";
+        settingCounterId = target;
+        currentButtonConfig = null; // No JSON config for these
         inputBuffer.setLength(0);
-        lcdLine2.setText("ENTER GUEST POINTS: ");
-    }
-
-    @FXML
-    private void handleHomePlusOne() {
-        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("homePoints");
-        counter.increment(1);
-        updateUI();
-    }
-
-    @FXML
-    private void handleHomePlusTwo() {
-        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("homePoints");
-        counter.increment(2);
-        updateUI();
-    }
-
-    @FXML
-    private void handleHomePlusSix() {
-        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("homePoints");
-        counter.increment(6);
-        updateUI();
-    }
-
-    @FXML
-    private void handleHomeMinusOne() {
-        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement("homePoints");
-        counter.decrement(1);
-        updateUI();
-    }
-
-    @FXML
-    private void handleHomeSetPoints() {
-        settingMode = true;
-        settingCounterId = "homePoints";
-        inputBuffer.setLength(0);
-        lcdLine2.setText("ENTER HOME POINTS: ");
+        lcdLine2.setText(prompt);
     }
 
     @FXML
     private void handlePlusOne(ActionEvent event) {
+        if (settingMode && "timerOne".equals(settingTimerId)) {
+            abortSetFunction();
+        }
         ScoreTimer timer = getSelectedTimer();
         if (timer != null && !timer.isRunning()) {
             timer.increment();
@@ -388,6 +428,9 @@ public class ScoreboardController implements Initializable {
 
     @FXML
     private void handleMinusOne(ActionEvent event) {
+        if (settingMode && "timerOne".equals(settingTimerId)) {
+            abortSetFunction();
+        }
         ScoreTimer timer = getSelectedTimer();
         if (timer != null && !timer.isRunning()) {
             timer.decrement();
@@ -404,6 +447,9 @@ public class ScoreboardController implements Initializable {
 
     @FXML
     private void handleStartStop(ActionEvent event) {
+        if (settingMode && "timerOne".equals(settingTimerId)) {
+            abortSetFunction();
+        }
         ScoreTimer timer = getSelectedTimer();
         if (timer != null) {
             timer.startstop();
@@ -413,6 +459,9 @@ public class ScoreboardController implements Initializable {
 
     @FXML
     private void handleHorn(ActionEvent event) {
+        if (settingMode && "timerOne".equals(settingTimerId)) {
+            abortSetFunction();
+        }
         String hornId = timerIds.get(currentTimerIndex) + "_Horn";
         ScoreIndicator horn = (ScoreIndicator) ruleEngine.getElement(hornId);
         if (horn != null && !horn.getCurrentValue()) {
@@ -424,6 +473,9 @@ public class ScoreboardController implements Initializable {
 
     @FXML
     private void handleNextTimer(ActionEvent event) {
+        if (settingMode && "timerOne".equals(settingTimerId)) {
+            abortSetFunction();
+        }
         currentTimerIndex = (currentTimerIndex + 1) % timerIds.size();
         updateUI();
     }
@@ -482,7 +534,7 @@ public class ScoreboardController implements Initializable {
         if (homePoints != null) {
             homePointsLabel.setText(homePoints.getDisplayValue());
         }
-        String lcdText = "Timer " + (currentTimerIndex + 1) + ": " + timer.getDisplayValue();
+        String lcdText = "Timer " + (currentTimerIndex + 1) + ": " + (timer != null ? timer.getDisplayValue() : "N/A");
         if (horn != null && horn.getCurrentValue()) {
             if (hornTimeline == null) {
                 startHornAnimation(horn);
