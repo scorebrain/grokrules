@@ -239,9 +239,8 @@ class ScoreTimer implements ScoreElement {
         }
     }
 
-    public void setValue(int seconds) {
-        long newValue = seconds * 1_000_000_000L;
-        this.currentValue = Math.max(minValue, Math.min(maxValue, newValue));
+    public void setValue(long nanos) {
+        this.currentValue = Math.max(minValue, Math.min(maxValue, nanos));
         if (!isRunning) {
             this.initialValue = currentValue;
         }

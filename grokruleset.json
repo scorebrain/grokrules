@@ -5,8 +5,8 @@
       "id": "timerOne",
       "initialSeconds": 15,
       "isDownCounting": true,
-      "minValue": 5000000000,
-      "maxValue": 30000000000,
+      "minValue": 0,
+      "maxValue": 5940000000000,
       "rolloverValue": 20000000000,
       "canRollUp": true,
       "canRollDown": false,
@@ -84,7 +84,9 @@
   "uiConfig": {
     "buttons": [
       {"fxId": "button_0_0", "label": "Start", "action": "start", "target": "timerOne"},
-      {"fxId": "button_0_1", "label": "Stop", "action": "stop", "target": "timerOne"}
+      {"fxId": "button_0_1", "label": "Stop", "action": "stop", "target": "timerOne"},
+      {"fxId": "button_1_0", "label": "Min Set", "action": "set", "target": "timerOne", "minutesPrompt": "SET TM1  <MM:SS>"},
+      {"fxId": "button_1_1", "label": "Sec Set", "action": "set", "target": "timerOne", "secondsPrompt": "SET TM1   <SS.t>"}
     ]
   }
 }
