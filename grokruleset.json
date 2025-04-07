@@ -3,7 +3,7 @@
     {
       "type": "ScoreTimer",
       "id": "timerOne",
-      "initialValue": 15000000000, // 15 seconds * 1e9
+      "initialValue": 15000000000,
       "isUpCounting": false,
       "allowShift": true,
       "minValue": 0,
@@ -22,12 +22,12 @@
       "initialValue": false,
       "observedTimerId": "timerOne",
       "triggerEvent": "expired",
-      "pattern": "1500:true"
+      "pattern": "300:true,200:false,300:true,200:false"
     },
     {
       "type": "ScoreTimer",
       "id": "timerTwo",
-      "initialValue": 120000000000, // 120 seconds * 1e9
+      "initialValue": 120000000000,
       "isUpCounting": true,
       "allowShift": true,
       "minValue": 0,
@@ -50,7 +50,7 @@
     {
       "type": "ScoreTimer",
       "id": "timerThree",
-      "initialValue": 30000000000, // 30 seconds * 1e9
+      "initialValue": 30000000000,
       "isUpCounting": false,
       "allowShift": true,
       "minValue": 0,
@@ -87,12 +87,28 @@
   ],
   "uiConfig": {
     "buttons": [
-      {"fxId": "button_0_0", "label": "Start", "action": "start", "target": "timerOne"},
-      {"fxId": "button_0_1", "label": "Stop", "action": "stop", "target": "timerOne"},
-      {"fxId": "button_1_0", "label": "Min Set", "action": "setCurrentValue", "target": "timerOne", "minutesPrompt": "SET TM1  <MM:SS>", "disableWhen": "target.isRunning == true"},
-      {"fxId": "button_1_1", "label": "Sec Set", "action": "setCurrentValue", "target": "timerOne", "secondsPrompt": "SET TM1   <SS.t>", "disableWhen": "target.isRunning == true || target.allowShift == false"},
-      {"fxId": "button_2_0", "label": "0.1 Sec", "action": "setAllowShift", "target": "timerOne", "promptLine1": " 1/10TH SECOND  ", "promptLine2": "1=YES  0=NO  <b>", "disableWhen": "target.isRunning == true || target.isUpCounting == true"},
-      {"fxId": "button_2_1", "label": "Up/Down", "action": "setIsUpCounting", "target": "timerOne", "promptLine1": "COUNT UP OR DOWN", "promptLine2": "1=UP 0=DOWN  <b>", "disableWhen": "target.isRunning == true"}
+      {"fxId": "buttonB8", "label": "SET CLOCK", "action": "setCurrentValue", "target": "timerOne", "minutesPrompt": "SET TM1  <MM:SS>", "disableWhen": "target.isRunning == true"},
+      {"fxId": "buttonB7", "label": "SET CLOCK .1 SEC", "action": "setCurrentValue", "target": "timerOne", "secondsPrompt": "SET TM1   <SS.t>", "disableWhen": "target.isRunning == true || target.allowShift == false"},
+      {"fxId": "buttonB6", "label": "0.1 SEC ON / OFF", "action": "setAllowShift", "target": "timerOne", "promptLine1": " 1/10TH SECOND  ", "promptLine2": "1=YES  0=NO  <b>", "disableWhen": "target.isRunning == true || target.isUpCounting == true"},
+      {"fxId": "buttonB5", "label": "CLOCK UP / DOWN", "action": "setIsUpCounting", "target": "timerOne", "promptLine1": "COUNT UP OR DOWN", "promptLine2": "1=UP 0=DOWN  <b>", "disableWhen": "target.isRunning == true"},
+      {"fxId": "buttonD8", "label": "SET GUEST SCORE", "action": "setCurrentValue", "target": "guestPoints", "promptLine2": "SET SCORE   <NN>"},
+      {"fxId": "buttonD7", "label": "SET HOME SCORE", "action": "setCurrentValue", "target": "homePoints", "promptLine2": "SET SCORE   <NN>"},
+      {"fxId": "buttonF8", "label": "GUEST SCORE +1", "action": "increment", "target": "guestPoints"},
+      {"fxId": "buttonF6", "label": "HOME SCORE +1", "action": "increment", "target": "homePoints"},
+      {"fxId": "buttonF2", "label": "HORN", "action": "activate", "target": "timerOne_Horn"},
+      {"fxId": "buttonF1", "label": "CLOCK ON / OFF", "action": "pause", "target": "timerOne"}
+    ],
+    "numberButtons": [
+      {"fxId": "buttonE3", "digit": "0"},
+      {"fxId": "buttonD4", "digit": "1"},
+      {"fxId": "buttonD3", "digit": "2"},
+      {"fxId": "buttonD2", "digit": "3"},
+      {"fxId": "buttonC4", "digit": "4"},
+      {"fxId": "buttonC3", "digit": "5"},
+      {"fxId": "buttonC2", "digit": "6"},
+      {"fxId": "buttonB4", "digit": "7"},
+      {"fxId": "buttonB3", "digit": "8"},
+      {"fxId": "buttonB2", "digit": "9"}
     ]
   }
 }

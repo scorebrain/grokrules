@@ -37,7 +37,7 @@ public class App extends Application {
     public void start(Stage stage) throws IOException {
         
         // Load the FXML file
-        FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("grokrules.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("MPController.fxml"));
         Parent root = fxmlLoader.load();
 
         // Get the controller instance
@@ -50,7 +50,7 @@ public class App extends Application {
         controller.configureButtons();
 
         // Set up the scene and show the stage
-        scene = new Scene(root, 650, 650);
+        scene = new Scene(root, 1536, 868);
         stage.setTitle("ScoreBrain Grok Rules");
         stage.setScene(scene);
         stage.show();

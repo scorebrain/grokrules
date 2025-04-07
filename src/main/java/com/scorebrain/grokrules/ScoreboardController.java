@@ -14,7 +14,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 import java.util.function.Supplier;
@@ -36,27 +36,23 @@ public class ScoreboardController implements Initializable {
     private String settingTimerId = null;
     private JsonObject currentButtonConfig = null;
     private Map<String, JsonObject> buttonConfigs = new HashMap<>();
+    private Map<Button, String> buttonToFxIdMap = new HashMap<>();
+    private Map<String, String> numberButtonMap = new HashMap<>();
     private Parent root;
     private boolean isInitialPrompt = false;
-    private String promptLine1 = "";
+    private String promptLine1 = ""; // Preserve prompt line 1
 
-    @FXML private Label timerLabel;
-    @FXML private Label lcdLine1;
-    @FXML private Label lcdLine2;
-    @FXML private Button buttonPlusOne;
-    @FXML private Button buttonMinusOne;
-    @FXML private Button buttonSet;
-    @FXML private Button buttonStartStop;
-    @FXML private Button buttonEnter;
-    @FXML private Button buttonBackspace;
-    @FXML private Circle runningIndicator;
+    @FXML private Label line1LCD;
+    @FXML private Label line2LCD;
+    @FXML private Label line3LCD;
+    @FXML private Label timerLabel; // New scoreboard timer
+    @FXML private Rectangle mainTimerRunningLight;
     @FXML private Text hornSymbol;
-    @FXML private Button buttonHorn;
-    @FXML private Button buttonNextTimer;
-    @FXML private Button button0, button1, button2, button3, button4,
-          button5, button6, button7, button8, button9;
-    @FXML private Label guestPointsLabel;
-    @FXML private Label homePointsLabel;
+    @FXML private Button buttonB8, buttonB7, buttonB6, buttonB5, buttonD8, buttonD7, buttonF8, buttonF6, buttonF2, buttonF1;
+    @FXML private Button buttonE3, buttonD4, buttonD3, buttonD2, buttonC4, buttonC3, buttonC2, buttonB4, buttonB3, buttonB2;
+    @FXML private Button buttonE2;
+    @FXML private Button buttonE4;
+    @FXML private Text flashIndicator;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -84,20 +80,69 @@ public class ScoreboardController implements Initializable {
 
     public void configureButtons() {
         JsonObject uiConfig = ruleEngine.getUiConfig();
-        if (uiConfig != null && uiConfig.has("buttons")) {
-            JsonArray buttons = uiConfig.getAsJsonArray("buttons");
-            for (JsonElement btn : buttons) {
-                JsonObject btnConfig = btn.getAsJsonObject();
-                String fxId = btnConfig.get("fxId").getAsString();
-                buttonConfigs.put(fxId, btnConfig);
-                Button button = (Button) root.lookup("#" + fxId);
-                if (button != null) {
-                    button.setText(btnConfig.get("label").getAsString());
-                    System.out.println("Labeled button " + fxId + " as '" + btnConfig.get("label").getAsString() + "'");
-                } else {
-                    System.out.println("Button with fx:id '" + fxId + "' not found.");
+        if (uiConfig != null) {
+            if (uiConfig.has("buttons")) {
+                JsonArray buttons = uiConfig.getAsJsonArray("buttons");
+                for (JsonElement btn : buttons) {
+                    JsonObject btnConfig = btn.getAsJsonObject();
+                    String fxId = btnConfig.get("fxId").getAsString();
+                    buttonConfigs.put(fxId, btnConfig);
+
+                    Button button = getButtonByFxId(fxId);
+                    if (button != null) {
+                        button.setText(btnConfig.get("label").getAsString());
+                        button.getStyleClass().removeAll("button");
+                        button.getStyleClass().add("basketball-text");
+                        button.setWrapText(true);
+                        buttonToFxIdMap.put(button, fxId);
+                        System.out.println("Labeled button " + fxId + " as '" + btnConfig.get("label").getAsString() + "'");
+                    } else {
+                        System.out.println("Button with fx:id '" + fxId + "' not found.");
+                    }
                 }
             }
+
+            if (uiConfig.has("numberButtons")) {
+                JsonArray numberButtons = uiConfig.getAsJsonArray("numberButtons");
+                for (JsonElement btn : numberButtons) {
+                    JsonObject btnConfig = btn.getAsJsonObject();
+                    String fxId = btnConfig.get("fxId").getAsString();
+                    String digit = btnConfig.get("digit").getAsString();
+                    numberButtonMap.put(fxId, digit);
+                    Button button = getButtonByFxId(fxId);
+                    if (button != null) {
+                        buttonToFxIdMap.put(button, fxId);
+                    }
+                }
+            }
+        }
+    }
+
+    private Button getButtonByFxId(String fxId) {
+        switch (fxId) {
+            case "buttonB8": return buttonB8;
+            case "buttonB7": return buttonB7;
+            case "buttonB6": return buttonB6;
+            case "buttonB5": return buttonB5;
+            case "buttonD8": return buttonD8;
+            case "buttonD7": return buttonD7;
+            case "buttonF8": return buttonF8;
+            case "buttonF6": return buttonF6;
+            case "buttonF2": return buttonF2;
+            case "buttonF1": return buttonF1;
+            case "buttonE3": return buttonE3;
+            case "buttonD4": return buttonD4;
+            case "buttonD3": return buttonD3;
+            case "buttonD2": return buttonD2;
+            case "buttonC4": return buttonC4;
+            case "buttonC3": return buttonC3;
+            case "buttonC2": return buttonC2;
+            case "buttonB4": return buttonB4;
+            case "buttonB3": return buttonB3;
+            case "buttonB2": return buttonB2;
+            case "buttonE2": return buttonE2;
+            case "buttonE4": return buttonE4;
+            default: return null;
         }
     }
 
@@ -108,9 +153,9 @@ public class ScoreboardController implements Initializable {
     @FXML
     private void handleGridButton(ActionEvent event) {
         Button button = (Button) event.getSource();
-        String fxId = button.getId();
-        JsonObject config = buttonConfigs.get(fxId);
+        String fxId = buttonToFxIdMap.get(button);
         System.out.println("Clicked button: " + fxId);
+        JsonObject config = buttonConfigs.get(fxId);
         if (config != null) {
             String action = config.has("action") ? config.get("action").getAsString() : "none";
             String target = config.has("target") ? config.get("target").getAsString() : "none";
@@ -147,31 +192,33 @@ public class ScoreboardController implements Initializable {
                 timer.startstop();
             } else if ("stop".equals(action) && timer.isRunning()) {
                 timer.startstop();
+            } else if ("pause".equals(action)) {
+                timer.startstop();
+            }
+        } else if (element instanceof ScoreIndicator indicator && "activate".equals(action)) {
+            if (!indicator.getCurrentValue()) {
+                indicator.setCurrentValue(true);
+                startHornAnimation(indicator);
             }
         }
         updateUI();
     }
 
     private void executeAction(ScoreElement element, String action, JsonObject config, String target) {
-        if (element instanceof ScoreCounter counter && "increment".equals(action)) {
-            if (config.has("amount")) {
-                counter.increment(config.get("amount").getAsInt());
+        if (element instanceof ScoreCounter counter) {
+            if ("increment".equals(action)) {
+                counter.increment(1);
                 updateUI();
-            } else {
-                System.out.println("No 'amount' specified for increment action");
-            }
-        } else if (element instanceof ScoreCounter counter && "decrement".equals(action)) {
-            if (config.has("amount")) {
-                counter.decrement(config.get("amount").getAsInt());
-                updateUI();
-            } else {
-                System.out.println("No 'amount' specified for decrement action");
+            } else if ("setCurrentValue".equals(action)) {
+                settingMode = true;
+                settingCounterId = target;
+                currentButtonConfig = config;
+                inputBuffer.setLength(0);
+                isInitialPrompt = true;
+                displayCounterPrompt(counter);
             }
         } else if (element instanceof ScoreTimer timer) {
-            if ("start".equals(action) && !timer.isRunning()) {
-                timer.startstop();
-                updateUI();
-            } else if ("stop".equals(action) && timer.isRunning()) {
+            if ("pause".equals(action)) {
                 timer.startstop();
                 updateUI();
             } else if ("setCurrentValue".equals(action) && !timer.isRunning()) {
@@ -195,6 +242,12 @@ public class ScoreboardController implements Initializable {
                 inputBuffer.setLength(0);
                 isInitialPrompt = true;
                 displayBinaryPrompt(timer.getIsUpCounting(), config.get("promptLine1").getAsString(), config.get("promptLine2").getAsString());
+            }
+        } else if (element instanceof ScoreIndicator indicator && "activate".equals(action)) {
+            if (!indicator.getCurrentValue()) {
+                indicator.setCurrentValue(true);
+                startHornAnimation(indicator);
+                updateUI();
             }
         }
     }
@@ -220,17 +273,35 @@ public class ScoreboardController implements Initializable {
                 display.append(String.format("%02d.%d", seconds, tenths));
             }
             display.append(">");
-            lcdLine2.setText(display.toString());
-            promptLine1 = "";
-            lcdLine1.setText(getTimerDisplayText());
+            line2LCD.setText(display.toString());
+            promptLine1 = currentButtonConfig.has("promptLine1") ? currentButtonConfig.get("promptLine1").getAsString() : "";
+            line1LCD.setText(promptLine1.isEmpty() ? prompt : promptLine1);
+            line3LCD.setText("");
+        }
+    }
+
+    private void displayCounterPrompt(ScoreCounter counter) {
+        String prompt = getPromptString(currentButtonConfig);
+        if (prompt != null) {
+            StringBuilder display = new StringBuilder();
+            int bracketStart = prompt.indexOf('<');
+            int bracketEnd = prompt.indexOf('>');
+            display.append(prompt.substring(0, bracketStart + 1));
+            display.append(String.format("%02d", counter.getCurrentValue()));
+            display.append(">");
+            line2LCD.setText(display.toString());
+            promptLine1 = currentButtonConfig.has("promptLine1") ? currentButtonConfig.get("promptLine1").getAsString() : "";
+            line1LCD.setText(promptLine1.isEmpty() ? prompt : promptLine1);
+            line3LCD.setText("");
         }
     }
 
     private void displayBinaryPrompt(boolean currentValue, String line1, String line2) {
         promptLine1 = line1;
         String displayLine2 = line2.replace("<b>", "<" + (currentValue ? "1" : "0") + ">");
-        lcdLine1.setText(promptLine1);
-        lcdLine2.setText(displayLine2);
+        line1LCD.setText(promptLine1);
+        line2LCD.setText(displayLine2);
+        line3LCD.setText("");
     }
 
     private String getPromptString(JsonObject config) {
@@ -238,6 +309,8 @@ public class ScoreboardController implements Initializable {
             return config.get("minutesPrompt").getAsString();
         } else if (config.has("secondsPrompt")) {
             return config.get("secondsPrompt").getAsString();
+        } else if (config.has("promptLine2")) {
+            return config.get("promptLine2").getAsString();
         }
         return null;
     }
@@ -246,14 +319,16 @@ public class ScoreboardController implements Initializable {
     private void handleNumberClick(ActionEvent event) {
         if (!settingMode) return;
         Button clickedButton = (Button) event.getSource();
-        String number = clickedButton.getText();
+        String fxId = buttonToFxIdMap.get(clickedButton);
+        String number = numberButtonMap.get(fxId);
+        if (number == null) return;
 
         String action = currentButtonConfig.get("action").getAsString();
         if (action.equals("setAllowShift") || action.equals("setIsUpCounting")) {
             if (!number.equals("0") && !number.equals("1")) return;
             inputBuffer.setLength(0);
             inputBuffer.append(number);
-            lcdLine2.setText(currentButtonConfig.get("promptLine2").getAsString().replace("<b>", "<" + number + ">"));
+            line2LCD.setText(currentButtonConfig.get("promptLine2").getAsString().replace("<b>", "<" + number + ">"));
             isInitialPrompt = false;
         } else {
             String prompt = getPromptString(currentButtonConfig);
@@ -288,7 +363,54 @@ public class ScoreboardController implements Initializable {
                 }
             }
             display.append(">");
-            lcdLine2.setText(display.toString());
+            line2LCD.setText(display.toString());
+        }
+    }
+
+    @FXML
+    private void handleEnterClick(ActionEvent event) {
+        if (!settingMode) return;
+        if (isInitialPrompt || inputBuffer.length() == 0) {
+            abortSetFunction();
+            return;
+        }
+        try {
+            String action = currentButtonConfig.get("action").getAsString();
+            if (action.equals("setCurrentValue")) {
+                String prompt = getPromptString(currentButtonConfig);
+                int bracketStart = prompt.indexOf('<');
+                int bracketEnd = prompt.indexOf('>');
+                String format = prompt.substring(bracketStart + 1, bracketEnd);
+                if (settingCounterId != null) {
+                    int value = Integer.parseInt(inputBuffer.toString().trim());
+                    ScoreCounter counter = (ScoreCounter) ruleEngine.getElement(settingCounterId);
+                    if (value >= counter.getMinValue() && value <= counter.getMaxValue()) {
+                        counter.setCurrentValue(value);
+                    }
+                    settingCounterId = null;
+                } else if (settingTimerId != null) {
+                    long nanos = parseInput(format, inputBuffer.toString().trim());
+                    ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(settingTimerId);
+                    if (nanos >= timer.getMinValue() && nanos <= timer.getMaxValue()) {
+                        timer.setValue(nanos);
+                    }
+                    settingTimerId = null;
+                }
+            } else if (action.equals("setAllowShift")) {
+                ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(settingTimerId);
+                timer.setAllowShift(inputBuffer.toString().trim().equals("1"));
+                settingTimerId = null;
+            } else if (action.equals("setIsUpCounting")) {
+                ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(settingTimerId);
+                timer.setIsUpCounting(inputBuffer.toString().trim().equals("1"));
+                settingTimerId = null;
+            }
+            settingMode = false;
+            currentButtonConfig = null;
+            resetUI();
+        } catch (NumberFormatException e) {
+            line2LCD.setText("Invalid input!");
+            line3LCD.setText("Error: " + e.getMessage());
         }
     }
 
@@ -328,56 +450,8 @@ public class ScoreboardController implements Initializable {
                     }
                 }
                 display.append(">");
-                lcdLine2.setText(display.toString());
+                line2LCD.setText(display.toString());
             }
-        }
-    }
-
-    @FXML
-    private void handleEnter(ActionEvent event) {
-        if (!settingMode) return;
-        if (isInitialPrompt || inputBuffer.length() == 0) {
-            abortSetFunction();
-            return;
-        }
-        try {
-            String action = currentButtonConfig.get("action").getAsString();
-            if (action.equals("setCurrentValue")) {
-                String prompt = getPromptString(currentButtonConfig);
-                int bracketStart = prompt.indexOf('<');
-                int bracketEnd = prompt.indexOf('>');
-                String format = prompt.substring(bracketStart + 1, bracketEnd);
-                long nanos = parseInput(format, inputBuffer.toString().trim());
-                if (settingCounterId != null) {
-                    ScoreCounter counter = (ScoreCounter) ruleEngine.getElement(settingCounterId);
-                    int seconds = (int) (nanos / 1_000_000_000L);
-                    if (seconds >= counter.getMinValue() && seconds <= counter.getMaxValue()) {
-                        counter.setCurrentValue(seconds);
-                    }
-                    settingCounterId = null;
-                } else if (settingTimerId != null) {
-                    ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(settingTimerId);
-                    if (nanos >= timer.getMinValue() && nanos <= timer.getMaxValue()) {
-                        timer.setValue(nanos);
-                    }
-                    settingTimerId = null;
-                }
-            } else if (action.equals("setAllowShift")) {
-                ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(settingTimerId);
-                timer.setAllowShift(inputBuffer.toString().trim().equals("1"));
-                settingTimerId = null;
-            } else if (action.equals("setIsUpCounting")) {
-                ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(settingTimerId);
-                timer.setIsUpCounting(inputBuffer.toString().trim().equals("1"));
-                settingTimerId = null;
-            }
-            settingMode = false;
-            currentButtonConfig = null;
-            buttonPlusOne.setDisable(false);
-            buttonMinusOne.setDisable(false);
-            resetUI();
-        } catch (NumberFormatException e) {
-            lcdLine2.setText("Invalid input!");
         }
     }
 
@@ -388,8 +462,6 @@ public class ScoreboardController implements Initializable {
         currentButtonConfig = null;
         isInitialPrompt = false;
         inputBuffer.setLength(0);
-        buttonPlusOne.setDisable(false);
-        buttonMinusOne.setDisable(false);
         promptLine1 = "";
         resetUI();
     }
@@ -407,125 +479,93 @@ public class ScoreboardController implements Initializable {
             int seconds = Integer.parseInt(paddedInput.substring(0, 2));
             int tenths = Integer.parseInt(paddedInput.substring(2, 3));
             nanos = seconds * 1_000_000_000L + tenths * 100_000_000L;
+        } else if (format.equals("NN")) {
+            return Long.parseLong(input);
         }
         return nanos;
     }
 
-    @FXML
-    private void handleGuestPlusOne() { executeCounterAction("guestPoints", "increment", 1); }
-    @FXML
-    private void handleGuestPlusTwo() { executeCounterAction("guestPoints", "increment", 2); }
-    @FXML
-    private void handleGuestPlusSix() { executeCounterAction("guestPoints", "increment", 6); }
-    @FXML
-    private void handleGuestMinusOne() { executeCounterAction("guestPoints", "decrement", 1); }
-    @FXML
-    private void handleGuestSetPoints() { startCounterSet("guestPoints", "ENTER GUEST POINTS: "); }
-
-    @FXML
-    private void handleHomePlusOne() { executeCounterAction("homePoints", "increment", 1); }
-    @FXML
-    private void handleHomePlusTwo() { executeCounterAction("homePoints", "increment", 2); }
-    @FXML
-    private void handleHomePlusSix() { executeCounterAction("homePoints", "increment", 6); }
-    @FXML
-    private void handleHomeMinusOne() { executeCounterAction("homePoints", "decrement", 1); }
-    @FXML
-    private void handleHomeSetPoints() { startCounterSet("homePoints", "ENTER HOME POINTS: "); }
-
-    private void executeCounterAction(String target, String action, int amount) {
-        if (settingMode && (target.equals(settingCounterId) || target.equals(settingTimerId))) {
-            abortSetFunction();
+    private boolean evaluateCondition(String condition, ScoreElement element) {
+        String[] parts = condition.split("\\|\\|");
+        for (String part : parts) {
+            String trimmedPart = part.trim();
+            String[] andParts = trimmedPart.split("&&");
+            boolean allTrue = true;
+            for (String andPart : andParts) {
+                String[] conditionParts = andPart.trim().split("==");
+                if (conditionParts.length != 2) continue;
+                String attr = conditionParts[0].trim().replace("target.", "");
+                String value = conditionParts[1].trim();
+                if (element instanceof ScoreTimer timer) {
+                    switch (attr) {
+                        case "isRunning":
+                            allTrue &= timer.isRunning() == Boolean.parseBoolean(value);
+                            break;
+                        case "allowShift":
+                            allTrue &= timer.getAllowShift() == Boolean.parseBoolean(value);
+                            break;
+                        case "isUpCounting":
+                            allTrue &= timer.getIsUpCounting() == Boolean.parseBoolean(value);
+                            break;
+                    }
+                }
+                if (!allTrue) break;
+            }
+            if (allTrue) return true;
         }
-        ScoreCounter counter = (ScoreCounter) ruleEngine.getElement(target);
-        if ("increment".equals(action)) {
-            counter.increment(amount);
-        } else if ("decrement".equals(action)) {
-            counter.decrement(amount);
-        }
-        updateUI();
+        return false;
     }
 
-    private void startCounterSet(String target, String prompt) {
-        if (settingMode) {
-            abortSetFunction();
+    private void updateUI() {
+        if (timerIds == null || timerIds.isEmpty()) {
+            timerLabel.setText("No timers");
+            mainTimerRunningLight.setStyle("-fx-fill: radial-gradient(center 50% 50%, radius 50%, darkred, black);");
+            if (hornSymbol != null) hornSymbol.setVisible(false);
             return;
         }
-        settingMode = true;
-        settingCounterId = target;
-        currentButtonConfig = null;
-        inputBuffer.setLength(0);
-        lcdLine2.setText(prompt);
-        promptLine1 = "";
-        lcdLine1.setText(getTimerDisplayText());
-    }
-
-    @FXML
-    private void handlePlusOne(ActionEvent event) {
-        if (settingMode && "timerOne".equals(settingTimerId)) {
-            abortSetFunction();
-        }
-        ScoreTimer timer = getSelectedTimer();
-        if (timer != null && !timer.isRunning()) {
-            timer.increment();
-            updateUI();
-        } else {
-            lcdLine2.setText("Timer is running!");
-        }
-    }
-
-    @FXML
-    private void handleMinusOne(ActionEvent event) {
-        if (settingMode && "timerOne".equals(settingTimerId)) {
-            abortSetFunction();
-        }
-        ScoreTimer timer = getSelectedTimer();
-        if (timer != null && !timer.isRunning()) {
-            timer.decrement();
-            updateUI();
-        } else {
-            lcdLine2.setText("Timer is running!");
-        }
-    }
-
-    @FXML
-    private void handleSet(ActionEvent event) {
-        // Deprecated, handled by handleGridButton
-    }
-
-    @FXML
-    private void handleStartStop(ActionEvent event) {
-        if (settingMode && "timerOne".equals(settingTimerId)) {
-            abortSetFunction();
-        }
-        ScoreTimer timer = getSelectedTimer();
+        ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(timerIds.get(currentTimerIndex));
         if (timer != null) {
-            timer.startstop();
-            updateUI();
-        }
-    }
+            timerLabel.setText(timer.getDisplayValue()); // Update scoreboard timer
+            mainTimerRunningLight.setStyle(timer.isRunning() ?
+                "-fx-fill: radial-gradient(center 50% 50%, radius 50%, greenyellow, forestgreen);" :
+                "-fx-fill: radial-gradient(center 50% 50%, radius 50%, darkred, black);");
+            timer.checkThresholds();
+            double currentSeconds = timer.getCurrentValue() / 1_000_000_000.0;
+            boolean shouldFlash = timer.isRunning() && currentSeconds < timer.getFlashZoneThreshold() && timer.getFlashZoneThreshold() >= 0;
 
-    @FXML
-    private void handleHorn(ActionEvent event) {
-        if (settingMode && "timerOne".equals(settingTimerId)) {
-            abortSetFunction();
+            if (shouldFlash && !isFlashing) {
+                startFlashAnimation(timer);
+                isFlashing = true;
+            } else if (!shouldFlash && isFlashing) {
+                stopFlashAnimation();
+                isFlashing = false;
+            }
+        } else {
+            timerLabel.setText("N/A");
+            mainTimerRunningLight.setStyle("-fx-fill: radial-gradient(center 50% 50%, radius 50%, darkred, black);");
         }
-        String hornId = timerIds.get(currentTimerIndex) + "_Horn";
-        ScoreIndicator horn = (ScoreIndicator) ruleEngine.getElement(hornId);
-        if (horn != null && !horn.getCurrentValue()) {
-            horn.setCurrentValue(true);
-            startHornAnimation(horn);
-            updateUI();
-        }
-    }
+        ScoreCounter guestPoints = (ScoreCounter) ruleEngine.getElement("guestPoints");
+        ScoreCounter homePoints = (ScoreCounter) ruleEngine.getElement("homePoints");
+        line3LCD.setText("Guest: " + (guestPoints != null ? guestPoints.getDisplayValue() : "N/A") +
+                         " | Home: " + (homePoints != null ? homePoints.getDisplayValue() : "N/A"));
 
-    @FXML
-    private void handleNextTimer(ActionEvent event) {
-        if (settingMode && "timerOne".equals(settingTimerId)) {
-            abortSetFunction();
+        // Only update LCD if not in setting mode or if promptLine1 is empty
+        if (!settingMode || promptLine1.isEmpty()) {
+            line1LCD.setText(getTimerDisplayText());
         }
-        currentTimerIndex = (currentTimerIndex + 1) % timerIds.size();
-        updateUI();
+
+        for (Map.Entry<String, JsonObject> entry : buttonConfigs.entrySet()) {
+            String fxId = entry.getKey();
+            JsonObject config = entry.getValue();
+            Button button = getButtonByFxId(fxId);
+            if (button != null && config.has("disableWhen")) {
+                String condition = config.get("disableWhen").getAsString();
+                String target = config.get("target").getAsString();
+                ScoreElement element = ruleEngine.getElement(target);
+                boolean disable = evaluateCondition(condition, element);
+                button.setDisable(disable);
+            }
+        }
     }
 
     private void startUITimer() {
@@ -538,9 +578,10 @@ public class ScoreboardController implements Initializable {
     private void resetUI() {
         updateUI();
         if (!settingMode) {
-            lcdLine2.setText("");
+            line2LCD.setText("");
             promptLine1 = "";
-            lcdLine1.setText(getTimerDisplayText());
+            line1LCD.setText(getTimerDisplayText());
+            line3LCD.setText("");
         }
     }
 
@@ -561,99 +602,9 @@ public class ScoreboardController implements Initializable {
         return lcdText;
     }
 
-    private void updateUI() {
-        if (timerIds == null || timerIds.isEmpty()) {
-            timerLabel.setText("No timers available");
-            runningIndicator.setFill(javafx.scene.paint.Color.DARKGRAY);
-            lcdLine1.setText("No timers");
-            hornSymbol.setVisible(false);
-            return;
-        }
-        ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(timerIds.get(currentTimerIndex));
-        if (timer != null) {
-            timerLabel.setText(timer.getDisplayValue());
-            runningIndicator.setFill(timer.isRunning() ?
-                javafx.scene.paint.Color.RED : javafx.scene.paint.Color.DARKGRAY);
-            timer.checkThresholds();
-            double currentSeconds = timer.getCurrentValue() / 1_000_000_000.0;
-            boolean shouldFlash = timer.isRunning() && currentSeconds < timer.getFlashZoneThreshold() && timer.getFlashZoneThreshold() >= 0;
-
-            if (shouldFlash && !isFlashing) {
-                startFlashAnimation(timer);
-                isFlashing = true;
-            } else if (!shouldFlash && isFlashing) {
-                stopFlashAnimation();
-                isFlashing = false;
-            }
-        } else {
-            timerLabel.setText("N/A");
-            runningIndicator.setFill(javafx.scene.paint.Color.DARKGRAY);
-        }
-        ScoreCounter guestPoints = (ScoreCounter) ruleEngine.getElement("guestPoints");
-        guestPointsLabel.setText(guestPoints != null ? guestPoints.getDisplayValue() : "N/A");
-        ScoreCounter homePoints = (ScoreCounter) ruleEngine.getElement("homePoints");
-        homePointsLabel.setText(homePoints != null ? homePoints.getDisplayValue() : "N/A");
-        if (guestPoints != null) {
-            guestPointsLabel.setText(guestPoints.getDisplayValue());
-        }
-        if (homePoints != null) {
-            homePointsLabel.setText(homePoints.getDisplayValue());
-        }
-        if (!settingMode || promptLine1.isEmpty()) {
-            lcdLine1.setText(getTimerDisplayText());
-        } else {
-            lcdLine1.setText(promptLine1);
-        }
-
-        // Update button states based on disableWhen conditions
-        for (Map.Entry<String, JsonObject> entry : buttonConfigs.entrySet()) {
-            String fxId = entry.getKey();
-            JsonObject config = entry.getValue();
-            Button button = (Button) root.lookup("#" + fxId);
-            if (button != null && config.has("disableWhen")) {
-                String condition = config.get("disableWhen").getAsString();
-                String target = config.get("target").getAsString();
-                ScoreElement element = ruleEngine.getElement(target);
-                boolean disable = evaluateCondition(condition, element);
-                button.setDisable(disable);
-            }
-        }
-    }
-
-    private boolean evaluateCondition(String condition, ScoreElement element) {
-        String[] parts = condition.split("\\|\\|"); // Support OR
-        for (String part : parts) {
-            String trimmedPart = part.trim();
-            String[] andParts = trimmedPart.split("&&"); // Support AND
-            boolean allTrue = true;
-            for (String andPart : andParts) {
-                String[] conditionParts = andPart.trim().split("==");
-                if (conditionParts.length != 2) continue; // Invalid condition
-                String attr = conditionParts[0].trim().replace("target.", "");
-                String value = conditionParts[1].trim();
-                if (element instanceof ScoreTimer timer) {
-                    switch (attr) {
-                        case "isRunning":
-                            allTrue &= timer.isRunning() == Boolean.parseBoolean(value);
-                            break;
-                        case "allowShift":
-                            allTrue &= timer.getAllowShift() == Boolean.parseBoolean(value);
-                            break;
-                        case "isUpCounting":
-                            allTrue &= timer.getIsUpCounting() == Boolean.parseBoolean(value);
-                            break;
-                    }
-                }
-                if (!allTrue) break;
-            }
-            if (allTrue) return true; // OR condition met
-        }
-        return false;
-    }
-
     private void startFlashAnimation(ScoreTimer timer) {
         String pattern = timer.getFlashZonePattern();
-        if (pattern == null || pattern.isEmpty()) {
+        if (pattern == null || pattern.isEmpty() || flashIndicator == null) {
             return;
         }
         String[] steps = pattern.split(",");
@@ -665,12 +616,12 @@ public class ScoreboardController implements Initializable {
             double duration = Double.parseDouble(parts[0]);
             boolean visible = Boolean.parseBoolean(parts[1]);
             flashTimeline.getKeyFrames().add(
-                new KeyFrame(Duration.millis(cumulativeTime), e -> timerLabel.setVisible(visible))
+                new KeyFrame(Duration.millis(cumulativeTime), e -> flashIndicator.setVisible(visible))
             );
             cumulativeTime += duration;
         }
         flashTimeline.getKeyFrames().add(
-            new KeyFrame(Duration.millis(cumulativeTime), e -> timerLabel.setVisible(firstVisible))
+            new KeyFrame(Duration.millis(cumulativeTime), e -> flashIndicator.setVisible(firstVisible))
         );
         flashTimeline.setCycleCount(Timeline.INDEFINITE);
         flashTimeline.play();
@@ -681,7 +632,7 @@ public class ScoreboardController implements Initializable {
             flashTimeline.stop();
             flashTimeline = null;
         }
-        timerLabel.setVisible(true);
+        if (flashIndicator != null) flashIndicator.setVisible(true);
     }
 
     private ScoreTimer getSelectedTimer() {
@@ -690,6 +641,11 @@ public class ScoreboardController implements Initializable {
 
     private void startHornAnimation(ScoreIndicator horn) {
         if (horn.getCurrentValue() && horn.getPattern() != null && hornTimeline == null) {
+            if (hornSymbol == null) {
+                System.out.println("Horn symbol not present in UI; skipping animation.");
+                horn.setCurrentValue(false);
+                return;
+            }
             String[] steps = horn.getPattern().split(",");
             hornTimeline = new Timeline();
             double cumulativeTime = 0;
