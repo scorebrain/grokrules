@@ -301,6 +301,9 @@ public class ScoreboardController implements Initializable {
             if ("increment".equals(action)) {
                 counter.increment(1);
                 updateUI();
+            } else if ("decrement".equals(action)) {
+                counter.decrement(1);
+                updateUI();
             } else if ("setCurrentValue".equals(action)) {
                 settingMode = true;
                 settingCounterId = target;
@@ -747,7 +750,7 @@ public class ScoreboardController implements Initializable {
             timerText = "00:00";
         }
 
-        return team1PointsText + " " + modeText + " " + timerText + " " + periodCountText + " " + team2PointsText;
+        return team1PointsText + " " + modeText + timerText + " " + periodCountText + " " + team2PointsText;
     }
 
     private void startFlashAnimation(ScoreTimer timer) {

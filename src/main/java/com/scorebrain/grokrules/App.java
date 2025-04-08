@@ -511,6 +511,9 @@ class ScoreCounter implements ScoreElement {
     private int minValue;
     private int maxValue;
     private int initialValue;
+    private Integer rolloverValue; // Nullable
+    private boolean canRollUp;
+    private boolean canRollDown;
 
     @Override
     public void initialize(JsonObject config) {
@@ -519,6 +522,9 @@ class ScoreCounter implements ScoreElement {
         this.minValue = config.get("minValue").getAsInt();
         this.maxValue = config.get("maxValue").getAsInt();
         this.currentValue = initialValue;
+        this.canRollUp = config.has("canRollUp") ? config.get("canRollUp").getAsBoolean() : false;
+        this.canRollDown = config.has("canRollDown") ? config.get("canRollDown").getAsBoolean() : false;
+        this.rolloverValue = config.has("rolloverValue") ? config.get("rolloverValue").getAsInt() : null;
     }
 
     @Override
@@ -537,11 +543,36 @@ class ScoreCounter implements ScoreElement {
     }
 
     public void increment(int amount) {
-        currentValue = Math.min(currentValue + amount, maxValue);
+        int newValue = currentValue + amount;
+        if (canRollUp && rolloverValue != null && currentValue <= rolloverValue && newValue > rolloverValue) {
+            // Roll over to minValue when currentValue <= rolloverValue and newValue > rolloverValue
+            currentValue = minValue + (newValue - rolloverValue - 1) % (maxValue - minValue + 1);
+        } else if (newValue > maxValue) {
+            if (canRollUp) {
+                // Roll over to minValue when exceeding maxValue
+                currentValue = minValue + (newValue - maxValue - 1) % (maxValue - minValue + 1);
+            } else {
+                currentValue = maxValue;
+            }
+        } else {
+            currentValue = newValue;
+        }
     }
 
     public void decrement(int amount) {
-        currentValue = Math.max(currentValue - amount, minValue);
+        int newValue = currentValue - amount;
+        if (newValue < minValue) {
+            if (canRollDown) {
+                int rollTarget = (rolloverValue != null && rolloverValue > minValue) ? rolloverValue : maxValue;
+                int range = maxValue - minValue + 1;
+                int excess = (minValue - newValue - 1) % range;
+                currentValue = rollTarget - excess;
+            } else {
+                currentValue = minValue;
+            }
+        } else {
+            currentValue = newValue;
+        }
     }
 
     public void setCurrentValue(int value) {
@@ -551,11 +582,11 @@ class ScoreCounter implements ScoreElement {
     public int getCurrentValue() {
         return currentValue;
     }
-    
+
     public int getMinValue() {
         return minValue;
     }
-    
+
     public int getMaxValue() {
         return maxValue;
     }
