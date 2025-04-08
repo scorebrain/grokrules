@@ -53,9 +53,9 @@ public class ScoreboardController implements Initializable {
     @FXML private Button buttonE2;
     @FXML private Button buttonE4;
     @FXML private VBox textScoreboard;
-    @FXML private Label line1Label, line2Label, line3Label, line4Label, line5Label, line6Label, line7Label, line8Label;
+    @FXML private Label line1Label, line2Label, line3Label, line4Label, line5Label, line6Label, line7Label, line8Label, line9Label;
     private Label mainTimerLabel, guestPointsLabel, homePointsLabel;
-    private Text mainHornLeft, mainHornRight, flashIndicator;
+    private Text mainHornLeft, mainHornRight;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -81,10 +81,10 @@ public class ScoreboardController implements Initializable {
     private void setupScoreboard() {
         textScoreboard.getChildren().clear();
 
+        // Line 1: G U E S T }mainTimer{ H O M E
         HBox line1 = new HBox();
-        Label tempLabel = new Label("  G U E S T          ");
-        tempLabel.getStyleClass().add("scoreboard-timer");
-        line1.getChildren().add(tempLabel);
+        Label guestLabel = createStyledLabel("  G U E S T          ", "scoreboard-timer");
+        line1.getChildren().add(guestLabel);
         mainHornLeft = new Text(">");
         mainHornLeft.setVisible(false);
         mainHornLeft.getStyleClass().add("scoreboard-indicator");
@@ -96,67 +96,54 @@ public class ScoreboardController implements Initializable {
         mainHornRight.setVisible(false);
         mainHornRight.getStyleClass().add("scoreboard-indicator");
         line1.getChildren().add(mainHornRight);
-        tempLabel = new Label("           H O M E");
-        tempLabel.getStyleClass().add("scoreboard-timer");
-        line1.getChildren().add(tempLabel);
+        Label homeLabel = createStyledLabel("           H O M E", "scoreboard-timer");
+        line1.getChildren().add(homeLabel);
         textScoreboard.getChildren().add(line1);
 
         // Line 2: POINTS POINTS
-        Label line2 = new Label("   POINTS                              POINTS");
-        line2.getStyleClass().add("scoreboard-text-line");
+        Label line2 = createStyledLabel("   POINTS                              POINTS", "scoreboard-text-line");
         textScoreboard.getChildren().add(line2);
 
         // Line 3: guestPoints PERIOD homePoints
         HBox line3 = new HBox();
-        line3.getChildren().add(new Label("    "));
-        guestPointsLabel = new Label("000");
-        guestPointsLabel.getStyleClass().add("scoreboard-timer");
+        line3.getChildren().add(createStyledLabel("    ", "scoreboard-timer"));
+        guestPointsLabel = createStyledLabel("000", "scoreboard-timer");
         line3.getChildren().add(guestPointsLabel);
-        //line3.getChildren().add(new Label("            PERIOD 1             "));
-        tempLabel = new Label("            PERIOD: 1            ");
-        tempLabel.getStyleClass().add("scoreboard-timer");
-        line3.getChildren().add(tempLabel);
-        homePointsLabel = new Label("000");
-        homePointsLabel.getStyleClass().add("scoreboard-timer");
+        Label periodLabel = createStyledLabel("            PERIOD: 1            ", "scoreboard-timer");
+        line3.getChildren().add(periodLabel);
+        homePointsLabel = createStyledLabel("000", "scoreboard-timer");
         line3.getChildren().add(homePointsLabel);
         textScoreboard.getChildren().add(line3);
 
-        // Line 4: Bonus Indicators (placeholders)
-        Label line4 = new Label("   < B B                                B B >");
-        line4.getStyleClass().add("scoreboard-text-line");
+        // Line 4: Bonus Indicators
+        Label line4 = createStyledLabel("   < B B                                B B >", "scoreboard-text-line");
         textScoreboard.getChildren().add(line4);
-        
+
         // Line 5: Spacer
-        Label line5 = new Label(" ");
-        line5.getStyleClass().add("scoreboard-text-line");
+        Label line5 = createStyledLabel(" ", "scoreboard-text-line");
         textScoreboard.getChildren().add(line5);
 
         // Line 6: Labels
-        Label line6 = new Label(" FOULS  TOL      PLAYER - FOUL      TOL   FOULS");
-        line6.getStyleClass().add("scoreboard-text-line");
+        Label line6 = createStyledLabel(" FOULS  TOL      PLAYER - FOUL      TOL   FOULS", "scoreboard-text-line");
         textScoreboard.getChildren().add(line6);
 
-        // Line 7: Foul Counters (placeholders)
-        Label line7 = new Label("  00     0          00     0         0     00");
-        line7.getStyleClass().add("scoreboard-text-line");
+        // Line 7: Foul Counters
+        Label line7 = createStyledLabel("  00     0          00     0         0     00", "scoreboard-text-line");
         textScoreboard.getChildren().add(line7);
 
         // Line 8: Spacer
-        Label line8 = new Label(" ");
-        line8.getStyleClass().add("scoreboard-text-line");
+        Label line8 = createStyledLabel(" ", "scoreboard-text-line");
         textScoreboard.getChildren().add(line8);
 
-        // Line 9: Shot Timer (placeholders) + Flash Indicator
-        HBox line9 = new HBox();
-        tempLabel = new Label("   [===]   VL   SHOT TIMER: >30<   VR   [===]");
-        tempLabel.getStyleClass().add("scoreboard-timer");
-        line9.getChildren().add(tempLabel);
-        flashIndicator = new Text("F");
-        flashIndicator.setVisible(false);
-        flashIndicator.getStyleClass().add("scoreboard-indicator");
-        line9.getChildren().add(flashIndicator);
+        // Line 9: Shot Timer
+        Label line9 = createStyledLabel("   [===]   VL   SHOT TIMER: >30<   VR   [===]", "scoreboard-text-line");
         textScoreboard.getChildren().add(line9);
-        
+    }
+
+    private Label createStyledLabel(String text, String styleClass) {
+        Label label = new Label(text);
+        label.getStyleClass().add(styleClass);
+        return label;
     }
 
     public void setRoot(Parent root) {
@@ -609,19 +596,26 @@ public class ScoreboardController implements Initializable {
             mainTimerRunningLight.setStyle("-fx-fill: radial-gradient(center 50% 50%, radius 50%, darkred, black);");
             mainHornLeft.setVisible(false);
             mainHornRight.setVisible(false);
-            flashIndicator.setVisible(false);
             return;
         }
         ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(timerIds.get(currentTimerIndex));
         if (timer != null) {
-            String timerText = timer.getDisplayValue();
-            if (timerText.length() == 5) { // MM:SS
-                mainTimerLabel.setText(timerText);
-            } else if (timerText.length() == 4) { // SS.t
-                mainTimerLabel.setText(" " + timerText);
-            } else if (timerText.length() == 2) { // SS
-                mainTimerLabel.setText("  " + timerText + "  ");
+            long nanos = timer.getCurrentValue();
+            long totalSeconds = nanos / 1_000_000_000L;
+            long tenths = (nanos % 1_000_000_000L) / 100_000_000L;
+            String timerText;
+            if (totalSeconds >= 60 || !timer.getAllowShift()) {
+                long minutes = totalSeconds / 60;
+                long seconds = totalSeconds % 60;
+                timerText = String.format("%2d:%02d", minutes, seconds);
+                if (minutes < 10) timerText = " " + timerText.substring(1);
+            } else {
+                long seconds = totalSeconds;
+                timerText = String.format("%2d.%d ", seconds, tenths);
+                if (seconds < 10) timerText = " " + timerText.substring(1);
             }
+            mainTimerLabel.setText(timerText);
+
             mainTimerRunningLight.setStyle(timer.isRunning() ?
                 "-fx-fill: radial-gradient(center 50% 50%, radius 50%, greenyellow, forestgreen);" :
                 "-fx-fill: radial-gradient(center 50% 50%, radius 50%, darkred, black);");
@@ -660,12 +654,12 @@ public class ScoreboardController implements Initializable {
         if (horn != null && horn.getCurrentValue()) {
             if (hornTimeline == null) {
                 startHornAnimation(horn);
-            }
+            } /*
             mainHornLeft.setVisible(true);
             mainHornRight.setVisible(true);
         } else {
-            mainHornLeft.setVisible(true);
-            mainHornRight.setVisible(true);
+            mainHornLeft.setVisible(false);
+            mainHornRight.setVisible(false);  */
         }
 
         if (!settingMode || promptLine1.isEmpty()) {
@@ -719,9 +713,7 @@ public class ScoreboardController implements Initializable {
 
     private void startFlashAnimation(ScoreTimer timer) {
         String pattern = timer.getFlashZonePattern();
-        if (pattern == null || pattern.isEmpty() || flashIndicator == null) {
-            return;
-        }
+        if (pattern == null || pattern.isEmpty()) return;
         String[] steps = pattern.split(",");
         flashTimeline = new Timeline();
         double cumulativeTime = 0;
@@ -731,12 +723,12 @@ public class ScoreboardController implements Initializable {
             double duration = Double.parseDouble(parts[0]);
             boolean visible = Boolean.parseBoolean(parts[1]);
             flashTimeline.getKeyFrames().add(
-                new KeyFrame(Duration.millis(cumulativeTime), e -> flashIndicator.setVisible(visible))
+                new KeyFrame(Duration.millis(cumulativeTime), e -> mainTimerLabel.setVisible(visible))
             );
             cumulativeTime += duration;
         }
         flashTimeline.getKeyFrames().add(
-            new KeyFrame(Duration.millis(cumulativeTime), e -> flashIndicator.setVisible(firstVisible))
+            new KeyFrame(Duration.millis(cumulativeTime), e -> mainTimerLabel.setVisible(firstVisible))
         );
         flashTimeline.setCycleCount(Timeline.INDEFINITE);
         flashTimeline.play();
@@ -747,7 +739,7 @@ public class ScoreboardController implements Initializable {
             flashTimeline.stop();
             flashTimeline = null;
         }
-        if (flashIndicator != null) flashIndicator.setVisible(false);
+        mainTimerLabel.setVisible(true);
     }
 
     private ScoreTimer getSelectedTimer() {

@@ -17,9 +17,9 @@
     
     <VBox fx:id="textScoreboard" prefHeight="300" prefWidth="748" styleClass="scoreboard-text" GridPane.columnIndex="0" GridPane.rowIndex="0">
 		<children>
-			<Label fx:id="line1Label" text=" G U E S T          }##:##{            H O M E" styleClass="scoreboard-text-line" />
+			<Label fx:id="line1Label" text="  G U E S T          }##:##{           H O M E" styleClass="scoreboard-text-line" />
 			<Label fx:id="line2Label" text="   POINTS                              POINTS" styleClass="scoreboard-text-line" />
-			<Label fx:id="line3Label" text="    000            PERIOD 1             000" styleClass="scoreboard-text-line" />
+			<Label fx:id="line3Label" text="    000            PERIOD: 1            000" styleClass="scoreboard-text-line" />
 			<Label fx:id="line4Label" text="   { B B                               B B }" styleClass="scoreboard-text-line" />
 			<Label fx:id="line5Label" text=" " styleClass="scoreboard-text-line" />
 			<Label fx:id="line6Label" text=" FOULS  TOL      PLAYER - FOUL      TOL   FOULS" styleClass="scoreboard-text-line" />
