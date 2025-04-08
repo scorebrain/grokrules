@@ -48,13 +48,15 @@ public class ScoreboardController implements Initializable {
     @FXML private Label line2LCD;
     @FXML private Label line3LCD;
     @FXML private Rectangle mainTimerRunningLight;
-    @FXML private Button buttonB8, buttonB7, buttonB6, buttonB5, buttonD8, buttonD7, buttonF8, buttonF6, buttonF2, buttonF1;
-    @FXML private Button buttonE3, buttonD4, buttonD3, buttonD2, buttonC4, buttonC3, buttonC2, buttonB4, buttonB3, buttonB2;
-    @FXML private Button buttonE2;
-    @FXML private Button buttonE4;
+    @FXML private Button buttonB8, buttonB7, buttonB6, buttonB5, buttonB4, buttonB3, buttonB2, buttonB1;
+    @FXML private Button buttonC8, buttonC7, buttonC6, buttonC5, buttonC4, buttonC3, buttonC2, buttonC1;
+    @FXML private Button buttonD8, buttonD7, buttonD6, buttonD5, buttonD4, buttonD3, buttonD2, buttonD1;
+    @FXML private Button buttonE8, buttonE7, buttonE6, buttonE5, buttonE4, buttonE3, buttonE2, buttonE1;
+    @FXML private Button buttonF8, buttonF6, buttonF4, buttonF2, buttonF1;
+    @FXML private Button buttonG8, buttonG7, buttonG6;
     @FXML private VBox textScoreboard;
     @FXML private Label line1Label, line2Label, line3Label, line4Label, line5Label, line6Label, line7Label, line8Label, line9Label;
-    private Label mainTimerLabel, guestPointsLabel, homePointsLabel;
+    private Label mainTimerLabel, team1PointsLabel, team2PointsLabel, periodLabel;
     private Text mainHornLeft, mainHornRight;
 
     @Override
@@ -81,10 +83,10 @@ public class ScoreboardController implements Initializable {
     private void setupScoreboard() {
         textScoreboard.getChildren().clear();
 
-        // Line 1: G U E S T }mainTimer{ H O M E
+        // Line 1: G U E S T >mainTimer< H O M E
         HBox line1 = new HBox();
-        Label guestLabel = createStyledLabel("  G U E S T          ", "scoreboard-timer");
-        line1.getChildren().add(guestLabel);
+        Label team1Label = createStyledLabel("  G U E S T          ", "scoreboard-timer");
+        line1.getChildren().add(team1Label);
         mainHornLeft = new Text(">");
         mainHornLeft.setVisible(false);
         mainHornLeft.getStyleClass().add("scoreboard-indicator");
@@ -96,23 +98,23 @@ public class ScoreboardController implements Initializable {
         mainHornRight.setVisible(false);
         mainHornRight.getStyleClass().add("scoreboard-indicator");
         line1.getChildren().add(mainHornRight);
-        Label homeLabel = createStyledLabel("           H O M E", "scoreboard-timer");
-        line1.getChildren().add(homeLabel);
+        Label team2Label = createStyledLabel("           H O M E", "scoreboard-timer");
+        line1.getChildren().add(team2Label);
         textScoreboard.getChildren().add(line1);
 
         // Line 2: POINTS POINTS
         Label line2 = createStyledLabel("   POINTS                              POINTS", "scoreboard-text-line");
         textScoreboard.getChildren().add(line2);
 
-        // Line 3: guestPoints PERIOD homePoints
+        // Line 3: team2Points PERIOD periodCount team2Points
         HBox line3 = new HBox();
         line3.getChildren().add(createStyledLabel("    ", "scoreboard-timer"));
-        guestPointsLabel = createStyledLabel("000", "scoreboard-timer");
-        line3.getChildren().add(guestPointsLabel);
-        Label periodLabel = createStyledLabel("            PERIOD: 1            ", "scoreboard-timer");
+        team1PointsLabel = createStyledLabel("000", "scoreboard-timer");
+        line3.getChildren().add(team1PointsLabel);
+        periodLabel = createStyledLabel("            PERIOD: 1            ", "scoreboard-timer");
         line3.getChildren().add(periodLabel);
-        homePointsLabel = createStyledLabel("000", "scoreboard-timer");
-        line3.getChildren().add(homePointsLabel);
+        team2PointsLabel = createStyledLabel("000", "scoreboard-timer");
+        line3.getChildren().add(team2PointsLabel);
         textScoreboard.getChildren().add(line3);
 
         // Line 4: Bonus Indicators
@@ -196,24 +198,42 @@ public class ScoreboardController implements Initializable {
             case "buttonB7": return buttonB7;
             case "buttonB6": return buttonB6;
             case "buttonB5": return buttonB5;
-            case "buttonD8": return buttonD8;
-            case "buttonD7": return buttonD7;
-            case "buttonF8": return buttonF8;
-            case "buttonF6": return buttonF6;
-            case "buttonF2": return buttonF2;
-            case "buttonF1": return buttonF1;
-            case "buttonE3": return buttonE3;
-            case "buttonD4": return buttonD4;
-            case "buttonD3": return buttonD3;
-            case "buttonD2": return buttonD2;
-            case "buttonC4": return buttonC4;
-            case "buttonC3": return buttonC3;
-            case "buttonC2": return buttonC2;
             case "buttonB4": return buttonB4;
             case "buttonB3": return buttonB3;
             case "buttonB2": return buttonB2;
-            case "buttonE2": return buttonE2;
+            case "buttonB1": return buttonB1;
+            case "buttonC8": return buttonC8;
+            case "buttonC7": return buttonC7;
+            case "buttonC6": return buttonC6;
+            case "buttonC5": return buttonC5;
+            case "buttonC4": return buttonC4;
+            case "buttonC3": return buttonC3;
+            case "buttonC2": return buttonC2;
+            case "buttonC1": return buttonC1;
+            case "buttonD8": return buttonD8;
+            case "buttonD7": return buttonD7;
+            case "buttonD6": return buttonD6;
+            case "buttonD5": return buttonD5;
+            case "buttonD4": return buttonD4;
+            case "buttonD3": return buttonD3;
+            case "buttonD2": return buttonD2;
+            case "buttonD1": return buttonD1;
+            case "buttonE8": return buttonE8;
+            case "buttonE7": return buttonE7;
+            case "buttonE6": return buttonE6;
+            case "buttonE5": return buttonE5;
             case "buttonE4": return buttonE4;
+            case "buttonE3": return buttonE3;
+            case "buttonE2": return buttonE2;
+            case "buttonE1": return buttonE1;
+            case "buttonF8": return buttonF8;
+            case "buttonF6": return buttonF6;
+            case "buttonF4": return buttonF4;
+            case "buttonF2": return buttonF2;
+            case "buttonF1": return buttonF1;
+            case "buttonG8": return buttonG8;
+            case "buttonG7": return buttonG7;
+            case "buttonG6": return buttonG6;
             default: return null;
         }
     }
@@ -591,8 +611,8 @@ public class ScoreboardController implements Initializable {
     private void updateUI() {
         if (timerIds == null || timerIds.isEmpty()) {
             mainTimerLabel.setText("00:00");
-            guestPointsLabel.setText("000");
-            homePointsLabel.setText("000");
+            team1PointsLabel.setText("000");
+            team2PointsLabel.setText("000");
             mainTimerRunningLight.setStyle("-fx-fill: radial-gradient(center 50% 50%, radius 50%, darkred, black);");
             mainHornLeft.setVisible(false);
             mainHornRight.setVisible(false);
@@ -635,18 +655,25 @@ public class ScoreboardController implements Initializable {
             mainTimerRunningLight.setStyle("-fx-fill: radial-gradient(center 50% 50%, radius 50%, darkred, black);");
         }
 
-        ScoreCounter guestPoints = (ScoreCounter) ruleEngine.getElement("guestPoints");
-        if (guestPoints != null) {
-            guestPointsLabel.setText(String.format("%3d", guestPoints.getCurrentValue()));
+        ScoreCounter team1Points = (ScoreCounter) ruleEngine.getElement("team1Points");
+        if (team1Points != null) {
+            team1PointsLabel.setText(String.format("%3d", team1Points.getCurrentValue()));
         } else {
-            guestPointsLabel.setText("000");
+            team1PointsLabel.setText("000");
         }
 
-        ScoreCounter homePoints = (ScoreCounter) ruleEngine.getElement("homePoints");
-        if (homePoints != null) {
-            homePointsLabel.setText(String.format("%3d", homePoints.getCurrentValue()));
+        ScoreCounter team2Points = (ScoreCounter) ruleEngine.getElement("team2Points");
+        if (team2Points != null) {
+            team2PointsLabel.setText(String.format("%3d", team2Points.getCurrentValue()));
         } else {
-            homePointsLabel.setText("000");
+            team2PointsLabel.setText("000");
+        }
+        
+        ScoreCounter periodCount = (ScoreCounter) ruleEngine.getElement("periodCount");
+        if (periodCount != null) {
+            periodLabel.setText("            PERIOD: " + periodCount.getCurrentValue() + "            ");
+        } else {
+            periodLabel.setText("            PERIOD: 1            ");
         }
 
         String hornId = timerIds.get(currentTimerIndex) + "_Horn";
@@ -654,12 +681,7 @@ public class ScoreboardController implements Initializable {
         if (horn != null && horn.getCurrentValue()) {
             if (hornTimeline == null) {
                 startHornAnimation(horn);
-            } /*
-            mainHornLeft.setVisible(true);
-            mainHornRight.setVisible(true);
-        } else {
-            mainHornLeft.setVisible(false);
-            mainHornRight.setVisible(false);  */
+            }
         }
 
         if (!settingMode || promptLine1.isEmpty()) {
@@ -699,16 +721,33 @@ public class ScoreboardController implements Initializable {
 
     private String getTimerDisplayText() {
         ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(timerIds.get(currentTimerIndex));
-        String lcdText = "Timer " + (currentTimerIndex + 1) + ": " + (timer != null ? timer.getDisplayValue() : "N/A");
-        String hornId = timerIds.get(currentTimerIndex) + "_Horn";
-        ScoreIndicator horn = (ScoreIndicator) ruleEngine.getElement(hornId);
-        if (horn != null && horn.getCurrentValue()) {
-            lcdText += " *";
+        ScoreCounter team1Points = (ScoreCounter) ruleEngine.getElement("team1Points");
+        ScoreCounter team2Points = (ScoreCounter) ruleEngine.getElement("team2Points");
+        ScoreCounter periodCount = (ScoreCounter) ruleEngine.getElement("periodCount");
+
+        String team1PointsText = team1Points != null ? String.format("%03d", team1Points.getCurrentValue()) : "000";
+        String team2PointsText = team2Points != null ? String.format("%03d", team2Points.getCurrentValue()) : "000";
+        String periodCountText = periodCount != null ? String.valueOf(periodCount.getCurrentValue()) : "1";
+        String modeText = timer != null ? (timer.getIsUpCounting() ? "U" : "D") : "D";
+
+        String timerText;
+        if (timer != null) {
+            long nanos = timer.getCurrentValue();
+            long totalSeconds = nanos / 1_000_000_000L;
+            long tenths = (nanos % 1_000_000_000L) / 100_000_000L;
+            if (totalSeconds >= 60 || !timer.getAllowShift()) {
+                long minutes = totalSeconds / 60;
+                long seconds = totalSeconds % 60;
+                timerText = String.format("%02d:%02d", minutes, seconds);
+            } else {
+                long seconds = totalSeconds;
+                timerText = String.format("%02d.%d ", seconds, tenths);
+            }
+        } else {
+            timerText = "00:00";
         }
-        if (timer != null && timer.isRunning() && timer.getCurrentValue() / 1_000_000_000.0 < timer.getFlashZoneThreshold() && timer.getFlashZoneThreshold() >= 0) {
-            lcdText += " F";
-        }
-        return lcdText;
+
+        return team1PointsText + " " + modeText + " " + timerText + " " + periodCountText + " " + team2PointsText;
     }
 
     private void startFlashAnimation(ScoreTimer timer) {

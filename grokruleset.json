@@ -104,21 +104,28 @@
       "id": "periodCount",
       "initialValue": 1,
       "minValue": 0,
-      "maxValue": 4
+      "maxValue": 9,
+	  "rolloverValue": 4,
+      "canRollUp": true,
+      "canRollDown": false
     },
     {
       "type": "ScoreCounter",
-      "id": "guestPoints",
+      "id": "team1Points",
       "initialValue": 0,
       "minValue": 0,
-      "maxValue": 99
+      "maxValue": 199,
+	  "canRollUp": true,
+      "canRollDown": false
     },
     {
       "type": "ScoreCounter",
-      "id": "homePoints",
+      "id": "team2Points",
       "initialValue": 0,
       "minValue": 0,
-      "maxValue": 99
+      "maxValue": 199,
+	  "canRollUp": true,
+      "canRollDown": false
     }
   ],
   "uiConfig": {
@@ -127,10 +134,10 @@
       {"fxId": "buttonB7", "label": "SET CLOCK .1 SEC", "action": "setCurrentValue", "target": "periodTimer", "secondsPrompt": "SET CLK   <SS.t>", "disableWhen": "target.isRunning == true || target.allowShift == false"},
       {"fxId": "buttonB6", "label": "0.1 SEC ON / OFF", "action": "setAllowShift", "target": "periodTimer", "promptLine1": " 1/10TH SECOND  ", "promptLine2": "1=YES  0=NO  <b>", "disableWhen": "target.isRunning == true || target.isUpCounting == true"},
       {"fxId": "buttonB5", "label": "CLOCK UP / DOWN", "action": "setIsUpCounting", "target": "periodTimer", "promptLine1": "COUNT UP OR DOWN", "promptLine2": "1=UP 0=DOWN  <b>", "disableWhen": "target.isRunning == true"},
-      {"fxId": "buttonD8", "label": "SET GUEST SCORE", "action": "setCurrentValue", "target": "guestPoints", "promptLine2": "SET SCORE   <NN>"},
-      {"fxId": "buttonD7", "label": "SET HOME SCORE", "action": "setCurrentValue", "target": "homePoints", "promptLine2": "SET SCORE   <NN>"},
-      {"fxId": "buttonF8", "label": "GUEST SCORE +1", "action": "increment", "target": "guestPoints"},
-      {"fxId": "buttonF6", "label": "HOME SCORE +1", "action": "increment", "target": "homePoints"},
+      {"fxId": "buttonD8", "label": "SET GUEST SCORE", "action": "setCurrentValue", "target": "team1Points", "promptLine2": "SET SCORE  <NNN>"},
+      {"fxId": "buttonD7", "label": "SET HOME SCORE", "action": "setCurrentValue", "target": "team1Points", "promptLine2": "SET SCORE  <NNN>"},
+      {"fxId": "buttonF8", "label": "GUEST SCORE +1", "action": "increment", "target": "team1Points"},
+      {"fxId": "buttonF6", "label": "HOME SCORE +1", "action": "increment", "target": "team2Points"},
       {"fxId": "buttonF2", "label": "HORN", "action": "activate", "target": "manual_Horn"},
       {"fxId": "buttonF1", "label": "CLOCK ON / OFF", "action": "pause", "target": "periodTimer"},
 	  {"fxId": "buttonE1", "label": "QTR./ PERIOD +1", "action": "increment", "target": "periodCount"}
