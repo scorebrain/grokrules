@@ -17,10 +17,15 @@
     
     <VBox fx:id="textScoreboard" prefHeight="300" prefWidth="748" styleClass="scoreboard-text" GridPane.columnIndex="0" GridPane.rowIndex="0">
 		<children>
-			<Label layoutX="30" layoutY="30" text="Text Scoreboard here" textFill="#009933" />
-			<Label fx:id="timerLabel" layoutX="100" layoutY="40" text="00:00" styleClass="scoreboard-timer" />
-			<Text fx:id="flashIndicator" layoutX="50" layoutY="60" text="FLASH" visible="false" styleClass="scoreboard-indicator" />
-			<Text fx:id="hornSymbol" layoutX="50" layoutY="90" text="*" visible="false" styleClass="scoreboard-indicator" />
+			<Label fx:id="line1Label" text=" G U E S T          }##:##{            H O M E" styleClass="scoreboard-text-line" />
+			<Label fx:id="line2Label" text="   POINTS                              POINTS" styleClass="scoreboard-text-line" />
+			<Label fx:id="line3Label" text="    000            PERIOD 1             000" styleClass="scoreboard-text-line" />
+			<Label fx:id="line4Label" text="   { B B                               B B }" styleClass="scoreboard-text-line" />
+			<Label fx:id="line5Label" text=" " styleClass="scoreboard-text-line" />
+			<Label fx:id="line6Label" text=" FOULS  TOL      PLAYER - FOUL      TOL   FOULS" styleClass="scoreboard-text-line" />
+			<Label fx:id="line7Label" text="  00     0          00     0         0     00" styleClass="scoreboard-text-line" />
+			<Label fx:id="line8Label" text=" " styleClass="scoreboard-text-line" />
+			<Label fx:id="line9Label" text="   [===]   VL   SHOT TIMER: }30{   VR   [===]" styleClass="scoreboard-text-line" />
 		</children>
 	</VBox>
     

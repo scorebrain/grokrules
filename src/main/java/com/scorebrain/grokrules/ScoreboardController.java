@@ -20,6 +20,8 @@ import javafx.util.Duration;
 import java.util.function.Supplier;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 public class ScoreboardController implements Initializable {
 
@@ -40,19 +42,20 @@ public class ScoreboardController implements Initializable {
     private Map<String, String> numberButtonMap = new HashMap<>();
     private Parent root;
     private boolean isInitialPrompt = false;
-    private String promptLine1 = ""; // Preserve prompt line 1
+    private String promptLine1 = "";
 
     @FXML private Label line1LCD;
     @FXML private Label line2LCD;
     @FXML private Label line3LCD;
-    @FXML private Label timerLabel; // New scoreboard timer
     @FXML private Rectangle mainTimerRunningLight;
-    @FXML private Text hornSymbol;
     @FXML private Button buttonB8, buttonB7, buttonB6, buttonB5, buttonD8, buttonD7, buttonF8, buttonF6, buttonF2, buttonF1;
     @FXML private Button buttonE3, buttonD4, buttonD3, buttonD2, buttonC4, buttonC3, buttonC2, buttonB4, buttonB3, buttonB2;
     @FXML private Button buttonE2;
     @FXML private Button buttonE4;
-    @FXML private Text flashIndicator;
+    @FXML private VBox textScoreboard;
+    @FXML private Label line1Label, line2Label, line3Label, line4Label, line5Label, line6Label, line7Label, line8Label;
+    private Label mainTimerLabel, guestPointsLabel, homePointsLabel;
+    private Text mainHornLeft, mainHornRight, flashIndicator;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -60,6 +63,7 @@ public class ScoreboardController implements Initializable {
         try {
             timerIds = ruleEngine.getTimerIds();
             System.out.println("timerIds set: " + timerIds);
+            setupScoreboard();
             resetUI();
             startUITimer();
             for (ScoreElement element : ruleEngine.getElements()) {
@@ -72,6 +76,87 @@ public class ScoreboardController implements Initializable {
             System.err.println("Exception in initialize:");
             e.printStackTrace();
         }
+    }
+
+    private void setupScoreboard() {
+        textScoreboard.getChildren().clear();
+
+        HBox line1 = new HBox();
+        Label tempLabel = new Label("  G U E S T          ");
+        tempLabel.getStyleClass().add("scoreboard-timer");
+        line1.getChildren().add(tempLabel);
+        mainHornLeft = new Text(">");
+        mainHornLeft.setVisible(false);
+        mainHornLeft.getStyleClass().add("scoreboard-indicator");
+        line1.getChildren().add(mainHornLeft);
+        mainTimerLabel = new Label("00:00");
+        mainTimerLabel.getStyleClass().add("scoreboard-timer");
+        line1.getChildren().add(mainTimerLabel);
+        mainHornRight = new Text("<");
+        mainHornRight.setVisible(false);
+        mainHornRight.getStyleClass().add("scoreboard-indicator");
+        line1.getChildren().add(mainHornRight);
+        tempLabel = new Label("           H O M E");
+        tempLabel.getStyleClass().add("scoreboard-timer");
+        line1.getChildren().add(tempLabel);
+        textScoreboard.getChildren().add(line1);
+
+        // Line 2: POINTS POINTS
+        Label line2 = new Label("   POINTS                              POINTS");
+        line2.getStyleClass().add("scoreboard-text-line");
+        textScoreboard.getChildren().add(line2);
+
+        // Line 3: guestPoints PERIOD homePoints
+        HBox line3 = new HBox();
+        line3.getChildren().add(new Label("    "));
+        guestPointsLabel = new Label("000");
+        guestPointsLabel.getStyleClass().add("scoreboard-timer");
+        line3.getChildren().add(guestPointsLabel);
+        //line3.getChildren().add(new Label("            PERIOD 1             "));
+        tempLabel = new Label("            PERIOD: 1            ");
+        tempLabel.getStyleClass().add("scoreboard-timer");
+        line3.getChildren().add(tempLabel);
+        homePointsLabel = new Label("000");
+        homePointsLabel.getStyleClass().add("scoreboard-timer");
+        line3.getChildren().add(homePointsLabel);
+        textScoreboard.getChildren().add(line3);
+
+        // Line 4: Bonus Indicators (placeholders)
+        Label line4 = new Label("   < B B                                B B >");
+        line4.getStyleClass().add("scoreboard-text-line");
+        textScoreboard.getChildren().add(line4);
+        
+        // Line 5: Spacer
+        Label line5 = new Label(" ");
+        line5.getStyleClass().add("scoreboard-text-line");
+        textScoreboard.getChildren().add(line5);
+
+        // Line 6: Labels
+        Label line6 = new Label(" FOULS  TOL      PLAYER - FOUL      TOL   FOULS");
+        line6.getStyleClass().add("scoreboard-text-line");
+        textScoreboard.getChildren().add(line6);
+
+        // Line 7: Foul Counters (placeholders)
+        Label line7 = new Label("  00     0          00     0         0     00");
+        line7.getStyleClass().add("scoreboard-text-line");
+        textScoreboard.getChildren().add(line7);
+
+        // Line 8: Spacer
+        Label line8 = new Label(" ");
+        line8.getStyleClass().add("scoreboard-text-line");
+        textScoreboard.getChildren().add(line8);
+
+        // Line 9: Shot Timer (placeholders) + Flash Indicator
+        HBox line9 = new HBox();
+        tempLabel = new Label("   [===]   VL   SHOT TIMER: >30<   VR   [===]");
+        tempLabel.getStyleClass().add("scoreboard-timer");
+        line9.getChildren().add(tempLabel);
+        flashIndicator = new Text("F");
+        flashIndicator.setVisible(false);
+        flashIndicator.getStyleClass().add("scoreboard-indicator");
+        line9.getChildren().add(flashIndicator);
+        textScoreboard.getChildren().add(line9);
+        
     }
 
     public void setRoot(Parent root) {
@@ -518,14 +603,25 @@ public class ScoreboardController implements Initializable {
 
     private void updateUI() {
         if (timerIds == null || timerIds.isEmpty()) {
-            timerLabel.setText("No timers");
+            mainTimerLabel.setText("00:00");
+            guestPointsLabel.setText("000");
+            homePointsLabel.setText("000");
             mainTimerRunningLight.setStyle("-fx-fill: radial-gradient(center 50% 50%, radius 50%, darkred, black);");
-            if (hornSymbol != null) hornSymbol.setVisible(false);
+            mainHornLeft.setVisible(false);
+            mainHornRight.setVisible(false);
+            flashIndicator.setVisible(false);
             return;
         }
         ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(timerIds.get(currentTimerIndex));
         if (timer != null) {
-            timerLabel.setText(timer.getDisplayValue()); // Update scoreboard timer
+            String timerText = timer.getDisplayValue();
+            if (timerText.length() == 5) { // MM:SS
+                mainTimerLabel.setText(timerText);
+            } else if (timerText.length() == 4) { // SS.t
+                mainTimerLabel.setText(" " + timerText);
+            } else if (timerText.length() == 2) { // SS
+                mainTimerLabel.setText("  " + timerText + "  ");
+            }
             mainTimerRunningLight.setStyle(timer.isRunning() ?
                 "-fx-fill: radial-gradient(center 50% 50%, radius 50%, greenyellow, forestgreen);" :
                 "-fx-fill: radial-gradient(center 50% 50%, radius 50%, darkred, black);");
@@ -541,15 +637,37 @@ public class ScoreboardController implements Initializable {
                 isFlashing = false;
             }
         } else {
-            timerLabel.setText("N/A");
+            mainTimerLabel.setText("00:00");
             mainTimerRunningLight.setStyle("-fx-fill: radial-gradient(center 50% 50%, radius 50%, darkred, black);");
         }
-        ScoreCounter guestPoints = (ScoreCounter) ruleEngine.getElement("guestPoints");
-        ScoreCounter homePoints = (ScoreCounter) ruleEngine.getElement("homePoints");
-        line3LCD.setText("Guest: " + (guestPoints != null ? guestPoints.getDisplayValue() : "N/A") +
-                         " | Home: " + (homePoints != null ? homePoints.getDisplayValue() : "N/A"));
 
-        // Only update LCD if not in setting mode or if promptLine1 is empty
+        ScoreCounter guestPoints = (ScoreCounter) ruleEngine.getElement("guestPoints");
+        if (guestPoints != null) {
+            guestPointsLabel.setText(String.format("%3d", guestPoints.getCurrentValue()));
+        } else {
+            guestPointsLabel.setText("000");
+        }
+
+        ScoreCounter homePoints = (ScoreCounter) ruleEngine.getElement("homePoints");
+        if (homePoints != null) {
+            homePointsLabel.setText(String.format("%3d", homePoints.getCurrentValue()));
+        } else {
+            homePointsLabel.setText("000");
+        }
+
+        String hornId = timerIds.get(currentTimerIndex) + "_Horn";
+        ScoreIndicator horn = (ScoreIndicator) ruleEngine.getElement(hornId);
+        if (horn != null && horn.getCurrentValue()) {
+            if (hornTimeline == null) {
+                startHornAnimation(horn);
+            }
+            mainHornLeft.setVisible(true);
+            mainHornRight.setVisible(true);
+        } else {
+            mainHornLeft.setVisible(true);
+            mainHornRight.setVisible(true);
+        }
+
         if (!settingMode || promptLine1.isEmpty()) {
             line1LCD.setText(getTimerDisplayText());
         }
@@ -591,9 +709,6 @@ public class ScoreboardController implements Initializable {
         String hornId = timerIds.get(currentTimerIndex) + "_Horn";
         ScoreIndicator horn = (ScoreIndicator) ruleEngine.getElement(hornId);
         if (horn != null && horn.getCurrentValue()) {
-            if (hornTimeline == null) {
-                startHornAnimation(horn);
-            }
             lcdText += " *";
         }
         if (timer != null && timer.isRunning() && timer.getCurrentValue() / 1_000_000_000.0 < timer.getFlashZoneThreshold() && timer.getFlashZoneThreshold() >= 0) {
@@ -632,7 +747,7 @@ public class ScoreboardController implements Initializable {
             flashTimeline.stop();
             flashTimeline = null;
         }
-        if (flashIndicator != null) flashIndicator.setVisible(true);
+        if (flashIndicator != null) flashIndicator.setVisible(false);
     }
 
     private ScoreTimer getSelectedTimer() {
@@ -641,11 +756,6 @@ public class ScoreboardController implements Initializable {
 
     private void startHornAnimation(ScoreIndicator horn) {
         if (horn.getCurrentValue() && horn.getPattern() != null && hornTimeline == null) {
-            if (hornSymbol == null) {
-                System.out.println("Horn symbol not present in UI; skipping animation.");
-                horn.setCurrentValue(false);
-                return;
-            }
             String[] steps = horn.getPattern().split(",");
             hornTimeline = new Timeline();
             double cumulativeTime = 0;
@@ -654,19 +764,26 @@ public class ScoreboardController implements Initializable {
                 double duration = Double.parseDouble(parts[0]);
                 boolean visible = Boolean.parseBoolean(parts[1]);
                 hornTimeline.getKeyFrames().add(
-                    new KeyFrame(Duration.millis(cumulativeTime), e -> hornSymbol.setVisible(visible))
+                    new KeyFrame(Duration.millis(cumulativeTime), e -> {
+                        mainHornLeft.setVisible(visible);
+                        mainHornRight.setVisible(visible);
+                    })
                 );
                 cumulativeTime += duration;
             }
             hornTimeline.getKeyFrames().add(
-                new KeyFrame(Duration.millis(cumulativeTime), e -> hornSymbol.setVisible(false))
+                new KeyFrame(Duration.millis(cumulativeTime), e -> {
+                    mainHornLeft.setVisible(false);
+                    mainHornRight.setVisible(false);
+                })
             );
             hornTimeline.setOnFinished(e -> {
                 horn.setCurrentValue(false);
                 hornTimeline = null;
                 updateUI();
             });
-            hornSymbol.setVisible(true);
+            mainHornLeft.setVisible(true);
+            mainHornRight.setVisible(true);
             hornTimeline.play();
         }
     }

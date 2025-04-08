@@ -7,12 +7,6 @@
    You can control most font details and background color at the container level
       but you control font color at the Label/Text level.
 */
-.scoreboard-text {
-    -fx-font-family: "Courier New";
-    -fx-font-size: 18px;
-    -fx-font-weight: normal;
-    -fx-background-color: #333333;
-}
 
 .mp-data-text {
     -fx-font-family: "Courier New";
@@ -278,16 +272,32 @@
     -fx-padding: 6; /* Adjust padding for better fit */
 }
 
+.scoreboard-text {
+    -fx-font-family: "Courier New";
+    -fx-font-size: 18px;
+    -fx-font-weight: normal;
+    -fx-background-color: #333333;
+    -fx-alignment: center-left; /* Center the VBox content */
+}
+
+.scoreboard-text-line {
+    -fx-font-family: "Courier New";
+    -fx-font-size: 18px;
+    -fx-font-weight: normal;
+    -fx-text-fill: #009933;
+    -fx-alignment: center-left; /* Align text left within each line */
+}
+
 .scoreboard-timer {
-    -fx-font-family: "Arial";
-    -fx-font-size: 24px;
-    -fx-font-weight: bold;
+    -fx-font-family: "Courier New"; /* Changed to monospaced */
+    -fx-font-size: 18px; /* Match line size */
+    -fx-font-weight: normal;
     -fx-text-fill: #009933;
 }
 
 .scoreboard-indicator {
-    -fx-font-family: "Arial";
+    -fx-font-family: "Courier New"; /* Changed to monospaced */
     -fx-font-size: 18px;
-    -fx-font-weight: bold;
-    -fx-fill: #009933; /* Use -fx-fill for Text */
+    -fx-font-weight: normal;
+    -fx-fill: #009933;
 }
