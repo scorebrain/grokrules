@@ -16,18 +16,18 @@
 <GridPane alignment="center" hgap="10" prefHeight="868" prefWidth="1536" stylesheets="@Stylish.css" vgap="10" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.scorebrain.grokrules.ScoreboardController">
     
     <VBox fx:id="textScoreboard" prefHeight="300" prefWidth="748" styleClass="scoreboard-text" GridPane.columnIndex="0" GridPane.rowIndex="0">
-		<children>
-			<Label fx:id="line1Label" text="  G U E S T          }##:##{           H O M E" styleClass="scoreboard-text-line" />
-			<Label fx:id="line2Label" text="   POINTS                              POINTS" styleClass="scoreboard-text-line" />
-			<Label fx:id="line3Label" text="    000            PERIOD: 1            000" styleClass="scoreboard-text-line" />
-			<Label fx:id="line4Label" text="   { B B                               B B }" styleClass="scoreboard-text-line" />
-			<Label fx:id="line5Label" text=" " styleClass="scoreboard-text-line" />
-			<Label fx:id="line6Label" text=" FOULS  TOL      PLAYER - FOUL      TOL   FOULS" styleClass="scoreboard-text-line" />
-			<Label fx:id="line7Label" text="  00     0          00     0         0     00" styleClass="scoreboard-text-line" />
-			<Label fx:id="line8Label" text=" " styleClass="scoreboard-text-line" />
-			<Label fx:id="line9Label" text="   [===]   VL   SHOT TIMER: }30{   VR   [===]" styleClass="scoreboard-text-line" />
-		</children>
-	</VBox>
+        <children>
+            <Label fx:id="line1Label" text="  G U E S T          }##:##{           H O M E" prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line2Label" text="   POINTS                              POINTS" prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line3Label" text="    000            PERIOD: 1            000" prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line4Label" text="   { B B                               B B }" prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line5Label" text=" " prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line6Label" text=" FOULS  TOL      PLAYER - FOUL      TOL   FOULS" prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line7Label" text="  00     0          00     0         0     00" prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line8Label" text=" " prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line9Label" text="   [===]   VL   SHOT TIMER: }30{   VR   [===]" prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+        </children>
+    </VBox>
     
     <ScrollPane fx:id="mpData" prefHeight="300" prefWidth="748" styleClass="mp-data-text" GridPane.columnIndex="1" GridPane.rowIndex="0">
         <content>
@@ -66,9 +66,9 @@
                             <Pane fx:id="lcdNumericColumn">
                                 <children>
                                     <Rectangle id="lcd-rectangle" height="55.0" layoutX="26.0" layoutY="30.0" width="200.0" />
-                                    <Label id="lcd-text" fx:id="line1LCD" layoutX="48.0" layoutY="38.0" text="LINE 1 123456789" />
-                                    <Label id="lcd-text" fx:id="line2LCD" layoutX="48.0" layoutY="58.0" text="LINE 2 987654321" />
-                                    <Label id="lcd-text" fx:id="line3LCD" layoutX="48.0" layoutY="90.0" text="EXTRA LINE: HORN" />
+                                    <Label fx:id="line1LCD" layoutX="48.0" layoutY="38.0" text="LINE 1 123456789" prefHeight="20.0" prefWidth="200.0" styleClass="lcd-text" />
+                                    <Label fx:id="line2LCD" layoutX="48.0" layoutY="58.0" text="LINE 2 987654321" prefHeight="20.0" prefWidth="200.0" styleClass="lcd-text" />
+                                    <Label fx:id="line3LCD" layoutX="48.0" layoutY="90.0" text="EXTRA LINE: HORN" prefHeight="20.0" prefWidth="200.0" styleClass="lcd-text" />
                                     <Button id="button-blue" fx:id="buttonB4" layoutX="38.0" layoutY="122.0" onAction="#handleNumberClick" />
                                     <Button id="button-blue" fx:id="buttonB3" layoutX="98.0" layoutY="122.0" onAction="#handleNumberClick" />
                                     <Button id="button-blue" fx:id="buttonB2" layoutX="158.0" layoutY="122.0" onAction="#handleNumberClick" />

@@ -511,9 +511,11 @@ class ScoreCounter implements ScoreElement {
     private int minValue;
     private int maxValue;
     private int initialValue;
-    private Integer rolloverValue; // Nullable
+    private Integer rolloverValue;
     private boolean canRollUp;
     private boolean canRollDown;
+    private boolean blank = true; // Initialize as blank
+    private boolean leadingZero = false;
 
     @Override
     public void initialize(JsonObject config) {
@@ -525,6 +527,7 @@ class ScoreCounter implements ScoreElement {
         this.canRollUp = config.has("canRollUp") ? config.get("canRollUp").getAsBoolean() : false;
         this.canRollDown = config.has("canRollDown") ? config.get("canRollDown").getAsBoolean() : false;
         this.rolloverValue = config.has("rolloverValue") ? config.get("rolloverValue").getAsInt() : null;
+        this.blank = true; // Ensure initial state is blank
     }
 
     @Override
@@ -535,11 +538,6 @@ class ScoreCounter implements ScoreElement {
     @Override
     public void reset() {
         currentValue = initialValue;
-    }
-
-    @Override
-    public String getDisplayValue() {
-        return String.valueOf(currentValue);
     }
 
     public void increment(int amount) {
@@ -575,12 +573,33 @@ class ScoreCounter implements ScoreElement {
         }
     }
 
+    public void setBlank(boolean blank) {
+        this.blank = blank;
+    }
+
+    public boolean isBlank() {
+        return blank;
+    }
+
+    public void setLeadingZero(boolean leadingZero) {
+        this.leadingZero = leadingZero;
+    }
+
+    public boolean getLeadingZero() {
+        return leadingZero;
+    }
+
     public void setCurrentValue(int value) {
         currentValue = Math.max(minValue, Math.min(value, maxValue));
     }
 
     public int getCurrentValue() {
         return currentValue;
+    }
+
+    @Override
+    public String getDisplayValue() {
+        return String.valueOf(currentValue);
     }
 
     public int getMinValue() {

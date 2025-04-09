@@ -156,6 +156,24 @@
       "type": "ScoreIndicator",
       "id": "team2Bonus2",
       "initialValue": false
+    },
+	{
+      "type": "ScoreCounter",
+      "id": "playerFoul",
+      "initialValue": 0,
+      "minValue": 0,
+      "maxValue": 9,
+      "canRollUp": false,
+      "canRollDown": false
+    },
+	{
+      "type": "ScoreCounter",
+      "id": "playerNumber",
+      "initialValue": 0,
+      "minValue": 0,
+      "maxValue": 99,
+      "canRollUp": false,
+      "canRollDown": false
     }
   ],
   "uiConfig": {
@@ -165,7 +183,9 @@
       {"fxId": "buttonB6", "label": "0.1 SEC ON / OFF", "action": "setAllowShift", "target": "periodTimer", "promptLine1": " 1/10TH SECOND  ", "promptLine2": "1=YES  0=NO  <b>", "disableWhen": "target.isRunning == true || target.isUpCounting == true"},
       {"fxId": "buttonB5", "label": "CLOCK UP / DOWN", "action": "setIsUpCounting", "target": "periodTimer", "promptLine1": "COUNT UP OR DOWN", "promptLine2": "1=UP 0=DOWN  <b>", "disableWhen": "target.isRunning == true"},
       {"fxId": "buttonD8", "label": "SET GUEST SCORE", "action": "setCurrentValue", "target": "team1Points", "promptLine2": "SET SCORE  <NNN>"},
-      {"fxId": "buttonD7", "label": "SET HOME SCORE", "action": "setCurrentValue", "target": "team1Points", "promptLine2": "SET SCORE  <NNN>"},
+      {"fxId": "buttonD7", "label": "SET HOME SCORE", "action": "setCurrentValue", "target": "team2Points", "promptLine2": "SET SCORE  <NNN>"},
+	  {"fxId": "buttonD6", "label": "PLAYER MATCH GAME", "action": "setCurrentValue", "target": "playerNumber", "promptLine2": "PLAYER NUM  <NN>"},
+      {"fxId": "buttonD5", "label": "PLAYER FOUL", "action": "setCurrentValue", "target": "playerFoul", "promptLine2": "PLAYER FOUL  <N>"},
       {"fxId": "buttonF8", "label": "GUEST SCORE +1", "action": "increment", "target": "team1Points"},
       {"fxId": "buttonF6", "label": "HOME SCORE +1", "action": "increment", "target": "team2Points"},
       {"fxId": "buttonF2", "label": "HORN", "action": "activate", "target": "manual_Horn"},
@@ -192,15 +212,10 @@
         "action": "toggle",
         "targets": ["team1Bonus1", "team1Bonus2"],
         "states": [
-          {"team1Bonus1": false, "team1Bonus2": false},
           {"team1Bonus1": true, "team1Bonus2": false},
-		  {"team1Bonus1": true, "team1Bonus2": true}
-        ],
-        "holdAction": {
-          "duration": 2000,
-          "action": "deactivate",
-          "targets": ["team1Possession", "team2Possession"]
-        }
+          {"team1Bonus1": true, "team1Bonus2": true},
+		  {"team1Bonus1": false, "team1Bonus2": false}
+        ]
       },
 	  {
         "fxId": "buttonE5",
@@ -208,15 +223,10 @@
         "action": "toggle",
         "targets": ["team2Bonus1", "team2Bonus2"],
         "states": [
-          {"team2Bonus1": false, "team2Bonus2": false},
           {"team2Bonus1": true, "team2Bonus2": false},
-		  {"team2Bonus1": true, "team2Bonus2": true}
-        ],
-        "holdAction": {
-          "duration": 2000,
-          "action": "deactivate",
-          "targets": ["team1Possession", "team2Possession"]
-        }
+          {"team2Bonus1": true, "team2Bonus2": true},
+		  {"team2Bonus1": false, "team2Bonus2": false}
+        ]
       }
     ],
     "numberButtons": [
