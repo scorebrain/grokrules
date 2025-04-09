@@ -40,6 +40,9 @@ public class ScoreboardController implements Initializable {
     private Map<String, JsonObject> buttonConfigs = new HashMap<>();
     private Map<Button, String> buttonToFxIdMap = new HashMap<>();
     private Map<String, String> numberButtonMap = new HashMap<>();
+    private Map<String, Integer> toggleStates = new HashMap<>(); // Track toggle state indices
+    private Map<String, Timeline> holdTimers = new HashMap<>();  // Timers for hold actions
+    private Map<String, Boolean> isHeld = new HashMap<>();       // Track if hold completed
     private Parent root;
     private boolean isInitialPrompt = false;
     private String promptLine1 = "";
@@ -61,17 +64,16 @@ public class ScoreboardController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        System.out.println("Initialize called");
         try {
             timerIds = ruleEngine.getTimerIds();
-            System.out.println("timerIds set: " + timerIds);
             setupScoreboard();
             resetUI();
             startUITimer();
             for (ScoreElement element : ruleEngine.getElements()) {
                 if (element instanceof ScoreIndicator) {
-                    ScoreIndicator indicator = (ScoreIndicator) element;
-                    indicator.setSelectedTimerSupplier(this::getSelectedTimerId);
+                    ((ScoreIndicator) element).setSelectedTimerSupplier(this::getSelectedTimerId);
+                    // ScoreIndicator indicator = (ScoreIndicator) element;
+                    // indicator.setSelectedTimerSupplier(this::getSelectedTimerId);
                 }
             }
         } catch (Exception e) {
@@ -106,7 +108,7 @@ public class ScoreboardController implements Initializable {
         Label line2 = createStyledLabel("   POINTS                              POINTS", "scoreboard-text-line");
         textScoreboard.getChildren().add(line2);
 
-        // Line 3: team2Points PERIOD periodCount team2Points
+        // Line 3: team1Points PERIOD periodCount team2Points
         HBox line3 = new HBox();
         line3.getChildren().add(createStyledLabel("    ", "scoreboard-timer"));
         team1PointsLabel = createStyledLabel("000", "scoreboard-timer");
@@ -117,9 +119,11 @@ public class ScoreboardController implements Initializable {
         line3.getChildren().add(team2PointsLabel);
         textScoreboard.getChildren().add(line3);
 
-        // Line 4: Bonus Indicators
-        Label line4 = createStyledLabel("   < B B                                B B >", "scoreboard-text-line");
-        textScoreboard.getChildren().add(line4);
+        // Line 4: Bonus Indicators with possession indicators (use @FXML line4Label)
+        line4Label.setText("   ? B B                                B B ?"); // Initial text with ? placeholders
+        line4Label.getStyleClass().clear(); // Clear any existing styles if necessary
+        line4Label.getStyleClass().add("scoreboard-text-line");
+        textScoreboard.getChildren().add(line4Label);
 
         // Line 5: Spacer
         Label line5 = createStyledLabel(" ", "scoreboard-text-line");
@@ -169,13 +173,17 @@ public class ScoreboardController implements Initializable {
                         button.getStyleClass().add("basketball-text");
                         button.setWrapText(true);
                         buttonToFxIdMap.put(button, fxId);
-                        System.out.println("Labeled button " + fxId + " as '" + btnConfig.get("label").getAsString() + "'");
-                    } else {
-                        System.out.println("Button with fx:id '" + fxId + "' not found.");
+
+                        // Initialize toggle buttons
+                        if ("toggle".equals(btnConfig.get("action").getAsString())) {
+                            toggleStates.put(fxId, 0);
+                            isHeld.put(fxId, false);
+                            button.setOnMousePressed(event -> startHoldTimer(fxId));
+                            button.setOnMouseReleased(event -> handleButtonRelease(fxId));
+                        }
                     }
                 }
             }
-
             if (uiConfig.has("numberButtons")) {
                 JsonArray numberButtons = uiConfig.getAsJsonArray("numberButtons");
                 for (JsonElement btn : numberButtons) {
@@ -246,12 +254,10 @@ public class ScoreboardController implements Initializable {
     private void handleGridButton(ActionEvent event) {
         Button button = (Button) event.getSource();
         String fxId = buttonToFxIdMap.get(button);
-        System.out.println("Clicked button: " + fxId);
         JsonObject config = buttonConfigs.get(fxId);
         if (config != null) {
             String action = config.has("action") ? config.get("action").getAsString() : "none";
             String target = config.has("target") ? config.get("target").getAsString() : "none";
-            System.out.println("Action: " + action + ", Target: " + target);
             ScoreElement element = ruleEngine.getElement(target);
 
             if (settingMode) {
@@ -266,9 +272,70 @@ public class ScoreboardController implements Initializable {
                 }
             }
 
-            executeAction(element, action, config, target);
-        } else {
-            System.out.println("No config found for button " + fxId);
+            // Handle toggle action separately since it uses mouse events
+            if (!"toggle".equals(action)) {
+                executeAction(element, action, config, target);
+            }
+        }
+    }
+    
+    private void startHoldTimer(String fxId) {
+        JsonObject config = buttonConfigs.get(fxId);
+        if (config.has("holdAction")) {
+            JsonObject holdAction = config.getAsJsonObject("holdAction");
+            int duration = holdAction.get("duration").getAsInt();
+            Timeline timer = new Timeline(new KeyFrame(Duration.millis(duration), e -> {
+                isHeld.put(fxId, true);
+                executeHoldAction(fxId);
+            }));
+            timer.setCycleCount(1);
+            holdTimers.put(fxId, timer);
+            timer.play();
+        }
+    }
+
+    private void handleButtonRelease(String fxId) {
+        Timeline timer = holdTimers.get(fxId);
+        if (timer != null) {
+            timer.stop();
+            holdTimers.remove(fxId);
+        }
+        if (!isHeld.getOrDefault(fxId, false)) {
+            executeToggleAction(fxId);
+        }
+        isHeld.put(fxId, false);
+    }
+    
+    private void executeToggleAction(String fxId) {
+        JsonObject config = buttonConfigs.get(fxId);
+        JsonArray states = config.getAsJsonArray("states");
+        int currentStateIndex = toggleStates.get(fxId);
+        JsonObject state = states.get(currentStateIndex).getAsJsonObject();
+        for (String target : state.keySet()) {
+            ScoreIndicator indicator = (ScoreIndicator) ruleEngine.getElement(target);
+            if (indicator != null) {
+                indicator.setCurrentValue(state.get(target).getAsBoolean());
+            }
+        }
+        int nextStateIndex = (currentStateIndex + 1) % states.size();
+        toggleStates.put(fxId, nextStateIndex);
+        updateUI();
+    }
+
+    private void executeHoldAction(String fxId) {
+        JsonObject config = buttonConfigs.get(fxId);
+        JsonObject holdAction = config.getAsJsonObject("holdAction");
+        String action = holdAction.get("action").getAsString();
+        JsonArray targets = holdAction.getAsJsonArray("targets");
+        if ("deactivate".equals(action)) {
+            for (JsonElement targetElem : targets) {
+                String target = targetElem.getAsString();
+                ScoreIndicator indicator = (ScoreIndicator) ruleEngine.getElement(target);
+                if (indicator != null) {
+                    indicator.setCurrentValue(false);
+                }
+            }
+            updateUI();
         }
     }
 
@@ -678,6 +745,39 @@ public class ScoreboardController implements Initializable {
         } else {
             periodLabel.setText("            PERIOD: 1            ");
         }
+        
+        ScoreIndicator team1Poss = (ScoreIndicator) ruleEngine.getElement("team1Possession");
+        ScoreIndicator team2Poss = (ScoreIndicator) ruleEngine.getElement("team2Possession");
+
+        // Update textScoreboard Line 4
+        String line4Text = "   ";
+        if (team1Poss != null && team1Poss.getCurrentValue()) {
+            line4Text += "< ";
+        } else {
+            line4Text += "  ";
+        }
+        line4Text += "B B                                B B ";
+        if (team2Poss != null && team2Poss.getCurrentValue()) {
+            line4Text += ">";
+        } else {
+            line4Text += " ";
+        }
+        line4Label.setText(line4Text);
+
+        // Update LCD Line 2
+        String lcdLine2 = "";
+        if (team1Poss != null && team1Poss.getCurrentValue()) {
+            lcdLine2 += "<";
+        } else {
+            lcdLine2 += " ";
+        }
+        lcdLine2 += "              "; // 14 spaces for 16-char display
+        if (team2Poss != null && team2Poss.getCurrentValue()) {
+            lcdLine2 += ">";
+        } else {
+            lcdLine2 += " ";
+        }
+        line2LCD.setText(lcdLine2);
 
         String hornId = timerIds.get(currentTimerIndex) + "_Horn";
         ScoreIndicator horn = (ScoreIndicator) ruleEngine.getElement(hornId);

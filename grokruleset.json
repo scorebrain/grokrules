@@ -126,6 +126,36 @@
       "maxValue": 199,
 	  "canRollUp": true,
       "canRollDown": false
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "team1Possession",
+      "initialValue": false
+    },
+    {
+      "type": "ScoreIndicator",
+      "id": "team2Possession",
+      "initialValue": false
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "team1Bonus1",
+      "initialValue": false
+    },
+    {
+      "type": "ScoreIndicator",
+      "id": "team1Bonus2",
+      "initialValue": false
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "team2Bonus1",
+      "initialValue": false
+    },
+    {
+      "type": "ScoreIndicator",
+      "id": "team2Bonus2",
+      "initialValue": false
     }
   ],
   "uiConfig": {
@@ -140,7 +170,54 @@
       {"fxId": "buttonF6", "label": "HOME SCORE +1", "action": "increment", "target": "team2Points"},
       {"fxId": "buttonF2", "label": "HORN", "action": "activate", "target": "manual_Horn"},
       {"fxId": "buttonF1", "label": "CLOCK ON / OFF", "action": "pause", "target": "periodTimer"},
-	  {"fxId": "buttonE1", "label": "QTR./ PERIOD +1", "action": "increment", "target": "periodCount"}
+	  {"fxId": "buttonE1", "label": "QTR./ PERIOD +1", "action": "increment", "target": "periodCount"},
+	  {
+        "fxId": "buttonF4",
+        "label": "POSS",
+        "action": "toggle",
+        "targets": ["team1Possession", "team2Possession"],
+        "states": [
+          {"team1Possession": true, "team2Possession": false},
+          {"team1Possession": false, "team2Possession": true}
+        ],
+        "holdAction": {
+          "duration": 2000,
+          "action": "deactivate",
+          "targets": ["team1Possession", "team2Possession"]
+        }
+      },
+	  {
+        "fxId": "buttonE6",
+        "label": "GUEST BONUS",
+        "action": "toggle",
+        "targets": ["team1Bonus1", "team1Bonus2"],
+        "states": [
+          {"team1Bonus1": false, "team1Bonus2": false},
+          {"team1Bonus1": true, "team1Bonus2": false},
+		  {"team1Bonus1": true, "team1Bonus2": true}
+        ],
+        "holdAction": {
+          "duration": 2000,
+          "action": "deactivate",
+          "targets": ["team1Possession", "team2Possession"]
+        }
+      },
+	  {
+        "fxId": "buttonE5",
+        "label": "HOME BONUS",
+        "action": "toggle",
+        "targets": ["team2Bonus1", "team2Bonus2"],
+        "states": [
+          {"team2Bonus1": false, "team2Bonus2": false},
+          {"team2Bonus1": true, "team2Bonus2": false},
+		  {"team2Bonus1": true, "team2Bonus2": true}
+        ],
+        "holdAction": {
+          "duration": 2000,
+          "action": "deactivate",
+          "targets": ["team1Possession", "team2Possession"]
+        }
+      }
     ],
     "numberButtons": [
       {"fxId": "buttonE3", "digit": "0"},
