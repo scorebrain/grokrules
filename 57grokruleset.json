@@ -196,57 +196,40 @@
   ],
   "uiConfig": {
     "buttons": [
-	  {"fxId": "buttonE4", "label": "CLEAR", "mainAction": "clear",
-        "alt0": {
-          "alt0Duration": 2000,
-          "alt0Action": "deactivate",
-          "alt0Targets": ["team1Possession", "team2Possession"]
-        }},
-	  {"fxId": "buttonE3", "label": "0", "mainAction": "number"},
-	  {"fxId": "buttonE2", "label": "ENTER", "mainAction": "enter"},
-      {"fxId": "buttonD4", "label": "1", "mainAction": "number"},
-      {"fxId": "buttonD3", "label": "2", "mainAction": "number"},
-      {"fxId": "buttonD2", "label": "3", "mainAction": "number"},
-      {"fxId": "buttonC4", "label": "4", "mainAction": "number"},
-      {"fxId": "buttonC3", "label": "5", "mainAction": "number"},
-      {"fxId": "buttonC2", "label": "6", "mainAction": "number"},
-      {"fxId": "buttonB4", "label": "7", "mainAction": "number"},
-      {"fxId": "buttonB3", "label": "8", "mainAction": "number"},
-      {"fxId": "buttonB2", "label": "9", "mainAction": "number"},
-      {"fxId": "buttonB8", "label": "SET CLOCK", "mainAction": "setCurrentValue", "mainTargets": ["periodTimer"], "mainPromptLine2": "SET CLK  <MM:SS>", "disableWhen": "mainTargets.isRunning == true"},
-      {"fxId": "buttonB7", "label": "SET CLOCK .1 SEC", "mainAction": "setCurrentValue", "mainTargets": ["periodTimer"], "mainPromptLine2": "SET CLK   <SS.X>", "disableWhen": "mainTargets.isRunning == true || mainTargets.allowShift == false"},
-      {"fxId": "buttonB6", "label": "0.1 SEC ON / OFF", "mainAction": "setAttributeValue", "mainTargets": ["periodTimer"], "mainAttribute": "allowShift", mainPromptLine1": " 1/10TH SECOND  ", "mainPromptLine2": "1=YES  0=NO  <N>", "disableWhen": "mainTargets.isRunning == true || mainTargets.isUpCounting == true"},
-      {"fxId": "buttonB5", "label": "CLOCK UP / DOWN", "mainAction": "setAttributeValue", "mainTargets": ["periodTimer"], "mainAttribute": "isUpCounting", "mainPromptLine1": "COUNT UP OR DOWN", "mainPromptLine2": "1=UP 0=DOWN  <N>", "disableWhen": "mainTargets.isRunning == true"},
-      {"fxId": "buttonD8", "label": "SET GUEST SCORE", "mainAction": "setCurrentValue", "mainTargets": ["team1Points"], "mainPromptLine2": "SET SCORE  <NNN>"},
-      {"fxId": "buttonD7", "label": "SET HOME SCORE", "mainAction": "setCurrentValue", "mainTargets": ["team2Points"], "mainPromptLine2": "SET SCORE  <NNN>"},
-	  {"fxId": "buttonD6", "label": "PLAYER MATCH GAME", "mainAction": "setCurrentValue", "mainTargets": ["playerNumber"], "mainPromptLine2": "PLAYER NUM  <NN>"},
-      {"fxId": "buttonD5", "label": "PLAYER FOUL", "mainAction": "setCurrentValue", "mainTargets": ["playerFoul"], "mainPromptLine2": "PLAYER FOUL  <N>"},
-      {"fxId": "buttonF8", "label": "GUEST SCORE +1", "mainAction": "increment", "mainTargets": ["team1Points"]},
-      {"fxId": "buttonF6", "label": "HOME SCORE +1", "mainAction": "increment", "mainTargets": ["team2Points"]},
-      {"fxId": "buttonF2", "label": "HORN", "mainAction": "activate", "mainTargets": ["manual_Horn"]},
-      {"fxId": "buttonF1", "label": "CLOCK ON / OFF", "mainAction": "pause", "mainTargets": ["periodTimer"]},
-	  {"fxId": "buttonE1", "label": "QTR./ PERIOD +1", "mainAction": "increment", "mainTargets": ["periodCount"]},
+      {"fxId": "buttonB8", "label": "SET CLOCK", "action": "setCurrentValue", "target": "periodTimer", "minutesPrompt": "SET CLK  <MM:SS>", "disableWhen": "target.isRunning == true"},
+      {"fxId": "buttonB7", "label": "SET CLOCK .1 SEC", "action": "setCurrentValue", "target": "periodTimer", "secondsPrompt": "SET CLK   <SS.t>", "disableWhen": "target.isRunning == true || target.allowShift == false"},
+      {"fxId": "buttonB6", "label": "0.1 SEC ON / OFF", "action": "setAllowShift", "target": "periodTimer", "promptLine1": " 1/10TH SECOND  ", "promptLine2": "1=YES  0=NO  <b>", "disableWhen": "target.isRunning == true || target.isUpCounting == true"},
+      {"fxId": "buttonB5", "label": "CLOCK UP / DOWN", "action": "setIsUpCounting", "target": "periodTimer", "promptLine1": "COUNT UP OR DOWN", "promptLine2": "1=UP 0=DOWN  <b>", "disableWhen": "target.isRunning == true"},
+      {"fxId": "buttonD8", "label": "SET GUEST SCORE", "action": "setCurrentValue", "target": "team1Points", "promptLine2": "SET SCORE  <NNN>"},
+      {"fxId": "buttonD7", "label": "SET HOME SCORE", "action": "setCurrentValue", "target": "team2Points", "promptLine2": "SET SCORE  <NNN>"},
+	  {"fxId": "buttonD6", "label": "PLAYER MATCH GAME", "action": "setCurrentValue", "target": "playerNumber", "promptLine2": "PLAYER NUM  <NN>"},
+      {"fxId": "buttonD5", "label": "PLAYER FOUL", "action": "setCurrentValue", "target": "playerFoul", "promptLine2": "PLAYER FOUL  <N>"},
+      {"fxId": "buttonF8", "label": "GUEST SCORE +1", "action": "increment", "target": "team1Points"},
+      {"fxId": "buttonF6", "label": "HOME SCORE +1", "action": "increment", "target": "team2Points"},
+      {"fxId": "buttonF2", "label": "HORN", "action": "activate", "target": "manual_Horn"},
+      {"fxId": "buttonF1", "label": "CLOCK ON / OFF", "action": "pause", "target": "periodTimer"},
+	  {"fxId": "buttonE1", "label": "QTR./ PERIOD +1", "action": "increment", "target": "periodCount"},
 	  {
         "fxId": "buttonF4",
         "label": "POSS",
-        "mainAction": "toggle",
-        "mainTargets": ["team1Possession"],
-        "mainStates": [
+        "action": "toggle",
+        "targets": ["team1Possession", "team2Possession"],
+        "states": [
           {"team1Possession": true, "team2Possession": false},
           {"team1Possession": false, "team2Possession": true}
         ],
-        "alt1": {
-          "alt1Duration": 2000,
-          "alt1Action": "deactivate",
-          "alt1Targets": ["team1Possession", "team2Possession"]
+        "holdAction": {
+          "duration": 2000,
+          "action": "deactivate",
+          "targets": ["team1Possession", "team2Possession"]
         }
       },
 	  {
         "fxId": "buttonE6",
         "label": "GUEST BONUS",
-        "mainAction": "toggle",
-        "mainTargets": ["team1Bonus1"],
-        "mainStates": [
+        "action": "toggle",
+        "targets": ["team1Bonus1", "team1Bonus2"],
+        "states": [
           {"team1Bonus1": true, "team1Bonus2": false},
           {"team1Bonus1": true, "team1Bonus2": true},
 		  {"team1Bonus1": false, "team1Bonus2": false}
@@ -255,9 +238,9 @@
 	  {
         "fxId": "buttonE5",
         "label": "HOME BONUS",
-        "mainAction": "toggle",
-        "mainTargets": ["team2Bonus1"],
-        "mainStates": [
+        "action": "toggle",
+        "targets": ["team2Bonus1", "team2Bonus2"],
+        "states": [
           {"team2Bonus1": true, "team2Bonus2": false},
           {"team2Bonus1": true, "team2Bonus2": true},
 		  {"team2Bonus1": false, "team2Bonus2": false}
@@ -266,27 +249,39 @@
 	  {
         "fxId": "buttonE8",
         "label": "TEAM FOULS",
-        "mainAction": "increment",
-        "mainTargets": ["team1Fouls"],
-        "alt1": {
-          "alt1Duration": 2000,
-          "alt1Action": "setCurrentValue",
-          "alt1Targets": ["team1Fouls"],
-		  "alt1PromptLine2": "SET FOULS   <NN>"
+        "action": "increment",
+        "target": "team1Fouls",
+        "holdAction": {
+          "duration": 2000,
+          "action": "setCurrentValue",
+          "target": "team1Fouls",
+		  "promptLine2": "SET FOULS   <NN>"
         }
       },
 	  {
         "fxId": "buttonE7",
         "label": "TEAM FOULS",
-        "mainAction": "increment",
-        "mainTargets": ["team2Fouls"],
-        "alt1": {
-          "alt1Duration": 2000,
-          "alt1Action": "setCurrentValue",
-          "alt1Targets": ["team2Fouls"],
-		  "alt1PromptLine2": "SET FOULS   <NN>"
+        "action": "increment",
+        "target": "team2Fouls",
+        "holdAction": {
+          "duration": 2000,
+          "action": "setCurrentValue",
+          "target": "team2Fouls",
+		  "promptLine2": "SET FOULS   <NN>"
         }
       }
+    ],
+    "numberButtons": [
+      {"fxId": "buttonE3", "digit": "0"},
+      {"fxId": "buttonD4", "digit": "1"},
+      {"fxId": "buttonD3", "digit": "2"},
+      {"fxId": "buttonD2", "digit": "3"},
+      {"fxId": "buttonC4", "digit": "4"},
+      {"fxId": "buttonC3", "digit": "5"},
+      {"fxId": "buttonC2", "digit": "6"},
+      {"fxId": "buttonB4", "digit": "7"},
+      {"fxId": "buttonB3", "digit": "8"},
+      {"fxId": "buttonB2", "digit": "9"}
     ]
   }
 }

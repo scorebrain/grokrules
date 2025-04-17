@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.text.Text?>
+
+<GridPane alignment="center" hgap="10" prefHeight="868" prefWidth="1536" stylesheets="@Stylish.css" vgap="10" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.scorebrain.grokrules.ScoreboardController">
+    
+    <VBox fx:id="textScoreboard" prefHeight="300" prefWidth="748" styleClass="scoreboard-text" GridPane.columnIndex="0" GridPane.rowIndex="0">
+        <children>
+            <Label fx:id="line1Label" text="  G U E S T          }##:##{           H O M E" prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line2Label" text="   POINTS                              POINTS" prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line3Label" text="    000            PERIOD: 1            000" prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line4Label" text="   { B B                               B B }" prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line5Label" text=" " prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line6Label" text=" FOULS  TOL      PLAYER - FOUL      TOL   FOULS" prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line7Label" text="  00     0          00     0         0     00" prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line8Label" text=" " prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+            <Label fx:id="line9Label" text="   [===]   VL   SHOT TIMER: }30{   VR   [===]" prefHeight="20.0" prefWidth="748.0" styleClass="scoreboard-text-line" />
+        </children>
+    </VBox>
+    
+    <ScrollPane fx:id="mpData" prefHeight="300" prefWidth="748" styleClass="mp-data-text" GridPane.columnIndex="1" GridPane.rowIndex="0">
+        <content>
+            <Label layoutX="126" layoutY="90" text="MP Data here" textFill="#0055cc" />
+        </content>
+    </ScrollPane>
+
+    <Pane id="keypad-gray" fx:id="cxController" prefHeight="568" prefWidth="748" GridPane.columnIndex="0" GridPane.rowIndex="1">
+        <children>
+            <VBox>
+                <children>
+                    <HBox fx:id="topRows">
+                        <children>
+                            <VBox prefWidth="65" />
+                            <Pane fx:id="teamsColumn">
+                                <Label layoutX="14.0" layoutY="292.0" text="GUEST" id="basketball-small-text" />
+                                <Label layoutX="72.0" layoutY="292.0" text="HOME" id="basketball-small-text" />
+                                <children>
+                                    <Button id="button-blue" fx:id="buttonB8" layoutX="2.0" layoutY="109.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonB7" layoutX="59.0" layoutY="109.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonB6" layoutX="116.0" layoutY="109.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonB5" layoutX="173.0" layoutY="109.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonC8" layoutX="2.0" layoutY="166.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonC7" layoutX="59.0" layoutY="166.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonC6" layoutX="116.0" layoutY="166.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonC5" layoutX="173.0" layoutY="166.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonD8" layoutX="2.0" layoutY="234.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonD7" layoutX="59.0" layoutY="234.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonD6" layoutX="116.0" layoutY="234.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonD5" layoutX="173.0" layoutY="234.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonE8" layoutX="2.0" layoutY="302.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonE7" layoutX="59.0" layoutY="302.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonE6" layoutX="116.0" layoutY="302.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonE5" layoutX="173.0" layoutY="302.0" onAction="#handleGridButton" />
+                                </children>
+                            </Pane>
+                            <VBox prefWidth="24.0" />
+                            <Pane fx:id="lcdNumericColumn">
+                                <children>
+                                    <Rectangle id="lcd-rectangle" height="55.0" layoutX="26.0" layoutY="30.0" width="200.0" />
+                                    <Label fx:id="line1LCD" layoutX="48.0" layoutY="38.0" text="LINE 1 123456789" prefHeight="20.0" prefWidth="200.0" styleClass="lcd-text" />
+                                    <Label fx:id="line2LCD" layoutX="48.0" layoutY="58.0" text="LINE 2 987654321" prefHeight="20.0" prefWidth="200.0" styleClass="lcd-text" />
+                                    <Label fx:id="line3LCD" layoutX="48.0" layoutY="90.0" text="EXTRA LINE: HORN" prefHeight="20.0" prefWidth="200.0" styleClass="lcd-text" />
+                                    <Button id="button-blue" fx:id="buttonB4" layoutX="38.0" layoutY="122.0" onAction="#handleNumberClick" />
+                                    <Button id="button-blue" fx:id="buttonB3" layoutX="98.0" layoutY="122.0" onAction="#handleNumberClick" />
+                                    <Button id="button-blue" fx:id="buttonB2" layoutX="158.0" layoutY="122.0" onAction="#handleNumberClick" />
+                                    <Button id="button-blue" fx:id="buttonC4" layoutX="38.0" layoutY="182.0" onAction="#handleNumberClick" />
+                                    <Button id="button-blue" fx:id="buttonC3" layoutX="98.0" layoutY="182.0" onAction="#handleNumberClick" />
+                                    <Button id="button-blue" fx:id="buttonC2" layoutX="158.0" layoutY="182.0" onAction="#handleNumberClick" />
+                                    <Button id="button-blue" fx:id="buttonD4" layoutX="38.0" layoutY="242.0" onAction="#handleNumberClick" />
+                                    <Button id="button-blue" fx:id="buttonD3" layoutX="98.0" layoutY="242.0" onAction="#handleNumberClick" />
+                                    <Button id="button-blue" fx:id="buttonD2" layoutX="158.0" layoutY="242.0" onAction="#handleNumberClick" />
+                                    <Button id="button-blue" fx:id="buttonE4" layoutX="38.0" layoutY="302.0" onAction="#handleBackClick" />
+                                    <Button id="button-blue" fx:id="buttonE3" layoutX="98.0" layoutY="302.0" onAction="#handleNumberClick" />
+                                    <Button id="button-blue" fx:id="buttonE2" layoutX="158.0" layoutY="302.0" onAction="#handleEnterClick" />
+                                    <Label id="basketball-text" layoutX="49" layoutY="323.0" mouseTransparent="true" text="CLEAR" />
+                                    <Label id="big-numbers-text" layoutX="120.0" layoutY="312.0" mouseTransparent="true" text="0" />
+                                    <Label id="big-letters-text" layoutX="116.0" layoutY="334.0" mouseTransparent="true" text="&amp;.-!" />
+                                    <Label id="basketball-text" layoutX="169.0" layoutY="323.0" mouseTransparent="true" text="ENTER" />
+                                    <Label id="big-numbers-text" layoutX="59.5" layoutY="252.0" mouseTransparent="true" text="1" />
+                                    <Label id="big-letters-text" layoutX="56.0" layoutY="274.0" mouseTransparent="true" text="STU" />
+                                    <Label id="big-numbers-text" layoutX="120.0" layoutY="252.0" mouseTransparent="true" text="2" />
+                                    <Label id="big-letters-text" layoutX="115.5" layoutY="274.0" mouseTransparent="true" text="VWX" />
+                                    <Label id="big-numbers-text" layoutX="180.0" layoutY="252.0" mouseTransparent="true" text="3" />
+                                    <Label id="big-letters-text" layoutX="180.0" layoutY="274.0" mouseTransparent="true" text="YZ" />
+                                    <Label id="big-numbers-text" layoutX="59.0" layoutY="192.0" mouseTransparent="true" text="4" />
+                                    <Label id="big-letters-text" layoutX="57.0" layoutY="214.0" mouseTransparent="true" text="JKL" />
+                                    <Label id="big-numbers-text" layoutX="120.0" layoutY="192.0" mouseTransparent="true" text="5" />
+                                    <Label id="big-letters-text" layoutX="114.0" layoutY="214.0" mouseTransparent="true" text="MNO" />
+                                    <Label id="big-numbers-text" layoutX="180.0" layoutY="192.0" mouseTransparent="true" text="6" />
+                                    <Label id="big-letters-text" layoutX="175.5" layoutY="214.0" mouseTransparent="true" text="PQR" />
+                                    <Label id="big-numbers-text" layoutX="59.0" layoutY="132.0" mouseTransparent="true" text="7" />
+                                    <Label id="big-letters-text" layoutX="55.0" layoutY="154.0" mouseTransparent="true" text="ABC" />
+                                    <Label id="big-numbers-text" layoutX="120.0" layoutY="132.0" mouseTransparent="true" text="8" />
+                                    <Label id="big-letters-text" layoutX="116.0" layoutY="154.0" mouseTransparent="true" text="DEF" />
+                                    <Label id="big-numbers-text" layoutX="180.0" layoutY="132.0" mouseTransparent="true" text="9" />
+                                    <Label id="big-letters-text" layoutX="177.0" layoutY="154.0" mouseTransparent="true" text="GHI" />
+                                </children>
+                            </Pane>
+                            <VBox prefWidth="30.0" />
+                            <Pane fx:id="rightColumn">
+                                <children>
+                                    <Button id="button-blue" fx:id="buttonB1" layoutX="10.0" layoutY="122.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonC1" layoutX="10.0" layoutY="182.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonD1" layoutX="10.0" layoutY="242.0" onAction="#handleGridButton" />
+                                    <Button id="button-blue" fx:id="buttonE1" layoutX="10.0" layoutY="302.0" onAction="#handleGridButton" />
+                                    <Label id="basketball-text" layoutX="26.0" layoutY="189.0" mouseTransparent="true" text="NEW" />
+                                    <Label id="basketball-text" layoutX="23.0" layoutY="200.0" mouseTransparent="true" text="GAME" />
+                                    <Rectangle arcHeight="7.0" arcWidth="7.0" fill="#011e41" height="16.0" layoutX="17.0" layoutY="214" mouseTransparent="true" width="41.0" />
+                                    <Label id="white-text" layoutX="20.0" layoutY="217.0" mouseTransparent="true" text="OPTIONS" />
+                                </children>
+                            </Pane>
+                        </children>
+                    </HBox>
+                    <Pane fx:id="bottomRow">
+                        <children>
+                            <Button id="button-blue" fx:id="buttonF8" layoutX="67.0" layoutY="15.0" onAction="#handleGridButton" />
+                            <Button id="button-blue" fx:id="buttonF6" layoutX="197.0" layoutY="15.0" onAction="#handleGridButton" />
+                            <Button id="button-blue" fx:id="buttonF4" layoutX="327.0" layoutY="15.0" onAction="#handleGridButton" />
+                            <Button id="button-blue" fx:id="buttonF2" layoutX="457.0" layoutY="15.0" onAction="#handleGridButton" />
+                            <Button id="button-red" fx:id="buttonF1" layoutX="587.0" layoutY="15.0" onAction="#handleGridButton" />
+                        </children>
+                    </Pane>
+                    <Pane fx:id="extraRow">
+                        <Pane fx:id="extraRow">
+                            <children>
+                                <Rectangle arcHeight="20.0" arcWidth="20.0" fill="#888888" height="68.0" layoutX="60.0" layoutY="18.0" width="352.0" />
+                                <Label id="team-text" layoutX="75.0" layoutY="32.0" text="PLAY" />
+                                <Label id="team-text" layoutX="69.0" layoutY="50.0" text="TIMER" />
+                                <Button id="button-blue" fx:id="buttonG8" layoutX="138.0" layoutY="25.0" onAction="#handleGridButton" />
+                                <Button id="button-blue" fx:id="buttonG7" layoutX="208.0" layoutY="25.0" onAction="#handleGridButton" />
+                                <Button id="button-blue" fx:id="buttonG6" layoutX="278.0" layoutY="25.0" onAction="#handleGridButton" />
+                                <Label id="popout-text" layoutX="356.0" layoutY="38.0" text="RUNNING" />
+                                <Rectangle id="light-off" fx:id="playTimerRunningLight" height="12.0" layoutX="360.0" layoutY="51.0" width="26.0" />
+                                <Rectangle arcHeight="20.0" arcWidth="20.0" fill="#888888" height="68.0" layoutX="424.0" layoutY="18.0" width="68.0" />
+                                <Label id="team-text" layoutX="435.5" layoutY="24.0" text="AUX" />
+                                <Label id="team-text" layoutX="430.0" layoutY="42.0" text="TIMER" />
+                                <Rectangle id="light-off" fx:id="auxTimerRunningLight" height="12.0" layoutX="444.0" layoutY="65.0" width="26.0" />
+                                <Rectangle arcHeight="20.0" arcWidth="20.0" fill="#888888" height="68.0" layoutX="504.0" layoutY="18.0" width="68.0" />
+                                <Label id="team-text" layoutX="520.0" layoutY="24.0" text="MAIN" />
+                                <Label id="team-text" layoutX="510.0" layoutY="42.0" text="TIMER" />
+                                <Rectangle id="light-off" fx:id="mainTimerRunningLight" height="12.0" layoutX="524.0" layoutY="65.0" width="26.0" />
+                                <Button id="button-invisible" fx:id="buttonH8" layoutX="598.0" layoutY="30.0" onAction="#handleGridButton" />
+                                <Circle id="light-off" fx:id="powerLight" layoutX="614.0" layoutY="46.0" radius="16.0" mouseTransparent="true" />
+                                <Label id="big-letters-text" layoutX="597.0" layoutY="66.0" text="POWER" />
+                            </children>
+                        </Pane>
+                    </Pane>
+                </children>
+            </VBox>
+        </children>
+    </Pane>
+
+    <Pane fx:id="gameData" prefHeight="568" prefWidth="748" GridPane.columnIndex="1" GridPane.rowIndex="1">
+        <children>
+            <Label layoutX="30" layoutY="30" text="Game Data JSON here" textFill="#009933" />
+        </children>
+    </Pane>
+   <columnConstraints>
+      <ColumnConstraints />
+      <ColumnConstraints />
+   </columnConstraints>
+   <rowConstraints>
+      <RowConstraints />
+      <RowConstraints />
+   </rowConstraints>
+</GridPane>
