@@ -160,12 +160,6 @@ public class ScoreboardController implements Initializable {
                     JsonObject btnConfig = btn.getAsJsonObject();
                     String fxId = btnConfig.get("fxId").getAsString();
                     buttonConfigs.put(fxId, btnConfig);
-                    /*
-			We were doing these steps for "numberButtons" only:
-                    String digit = btnConfig.get("digit").getAsString();
-                    numberButtonMap.put(fxId, digit);
-                    */
-
                     Button button = getButtonByFxId(fxId);
                     if (button != null) {
                         // Checking buttonE7 and buttonE8 explicitly is bad coupling.  Fix this later!!
@@ -257,14 +251,9 @@ public class ScoreboardController implements Initializable {
         JsonObject config = buttonConfigs.get(fxId);
         if (config.has("alt1")) {
             JsonObject alt1 = config.getAsJsonObject("alt1");
-            // System.out.println("config / alt1" + config + " / " + alt1);
-            // String holdAction = alt1.get("alt1Action").getAsString();
             int duration = alt1.get("alt1Duration").getAsInt();
-            System.out.println("duration: " + duration);
             Timeline timer = new Timeline(new KeyFrame(Duration.millis(duration), e -> {
                 isHeld.put(fxId, true);
-                System.out.println("Should print when hold timer reaches duration.");
-                // executeHoldAction(fxId);
             }));
             timer.setCycleCount(1);
             holdTimers.put(fxId, timer);
@@ -273,16 +262,14 @@ public class ScoreboardController implements Initializable {
     }
 
     private void handleButtonRelease(String fxId) {
-        System.out.println("handleButtonRelase, initial entry, settingMode = " + (settingMode?"True":"False") + "fxId = " + fxId);
         Timeline timeline = holdTimers.get(fxId);
         if (timeline != null) {
             timeline.stop();
             holdTimers.remove(fxId);
-            System.out.println("Timeline stopped; hold timers entry removed.");
+            System.out.println("Timeline stopped. Does this line ever print?");
         }
         JsonObject config = buttonConfigs.get(fxId);
         String action = config.has("mainAction") ? config.get("mainAction").getAsString() : "none";
-        // String target = config.has("mainTarget") ? config.get("mainTarget").getAsString() : "none";
         JsonArray targets = config.has("mainTargets") ? config.getAsJsonArray("mainTargets") : null;
         JsonArray states = config.has("mainStates") ? config.getAsJsonArray("mainStates") : null;
         String promptLine1 = config.has("mainPromptLine1") ? config.get("mainPromptLine1").getAsString() : "none";
@@ -300,11 +287,11 @@ public class ScoreboardController implements Initializable {
                 promptLine2 = alt1Config.has("alt1PromptLine2") ? alt1Config.get("alt1PromptLine2").getAsString() : "none";
                 attribute = config.has("alt1Attribute") ? config.get("alt1Attribute").getAsString() : "none";
                 amount = alt1Config.has("alt1Amount") ? alt1Config.get("alt1Amount").getAsInt() : 1;
-                System.out.println("alt1 stuff " + action + " " + targets);
             }
             isHeld.put(fxId, false);
 	}
         if (config.has("alt0") && !settingMode) {
+            // This is for tagging buttons like CLEAR or ENTER with special non-setting actions
             JsonObject alt1Config = config.getAsJsonObject("alt0");
             action = alt1Config.has("alt0Action") ? alt1Config.get("alt0Action").getAsString() : "none";
             targets = alt1Config.has("alt0Targets") ? alt1Config.getAsJsonArray("alt0Targets") : null;
@@ -313,14 +300,13 @@ public class ScoreboardController implements Initializable {
             promptLine2 = alt1Config.has("alt0PromptLine2") ? alt1Config.get("alt0PromptLine2").getAsString() : "none";
             attribute = config.has("alt0Attribute") ? config.get("alt0Attribute").getAsString() : "none";
             amount = alt1Config.has("alt0Amount") ? alt1Config.get("alt0Amount").getAsInt() : 1;
-            System.out.println("alt0 stuff " + action + " " + targets);
         }
         // If action = Number or Clear or Enter, there will be no "targets" array
         if ("number".equals(action)) {
             System.out.println("label = " + config.get("label").getAsString() + "  promptLine2 = " + promptLine2);
             handleNumberClick(config.get("label").getAsString());
         } else if ("enter".equals(action)) {
-            handleEnterClick(config);
+            handleEnterClick();
         } else if ("clear".equals(action)) {
             handleClearClick();
         } else {
@@ -455,13 +441,10 @@ public class ScoreboardController implements Initializable {
         isInitialPrompt = false;
         int bracketStart = settingPromptLine2.indexOf('<');
         int bracketEnd = settingPromptLine2.indexOf('>');
-        System.out.println("settingTimerID + settingCounterId + settingAtrribute  " + settingTimerId + " " + settingCounterId + " " + settingAttribute);
         String format = settingPromptLine2.substring(bracketStart + 1, bracketEnd);
         if (settingCursorPos < settingCursorMax) {
             settingCursorPos++;
         }
-        System.out.println("#Click settingCursor = " + settingCursorPos + "  max = " + settingCursorMax);
-
         if (!"none".equals(settingTimerId) && "none".equals(settingAttribute)) {
             if ("MM:SS".equals(format)) {
                 if (inputBuffer.length() < 4) {
@@ -536,7 +519,7 @@ public class ScoreboardController implements Initializable {
         }
     }
     
-    private void handleEnterClick(JsonObject btnConfig) {
+    private void handleEnterClick() {
         if (!settingMode || isInitialPrompt || inputBuffer.length() == 0 || settingPromptLine2 == null) {
             abortSetFunction();
             return;
@@ -544,8 +527,6 @@ public class ScoreboardController implements Initializable {
 	int bracketStart = settingPromptLine2.indexOf('<');
         int bracketEnd = settingPromptLine2.indexOf('>');
         String format = settingPromptLine2.substring(bracketStart + 1, bracketEnd);
-        
-
         if (!"none".equals(settingTimerId)) {
             ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(settingTimerId);
             if ("none".equals(settingAttribute)) {
@@ -603,12 +584,11 @@ public class ScoreboardController implements Initializable {
         settingMode = false;
         settingPromptLine2 = "none";
         settingCursorPos = 1;
-        btnConfig = null;		// Do we need this?  Do we need to pass this parameter?
         resetUI();
     }
     
     private void handleClearClick() {
-        System.out.println("Clear... settingCursorPos = " + settingCursorPos + "  input.len = " + inputBuffer.length());
+        // This codes [CLEAR] to work as backspace -- which is not normal for an MP controller
         if (!settingMode) return;
         if (isInitialPrompt || inputBuffer.length() < 1 || settingCursorPos < 1) {
             abortSetFunction();
@@ -722,37 +702,6 @@ public class ScoreboardController implements Initializable {
             return Long.parseLong(input);
         }
         return nanos;
-    }
-
-    private boolean evaluateCondition(String condition, ScoreElement element) {
-        String[] parts = condition.split("\\|\\|");
-        for (String part : parts) {
-            String trimmedPart = part.trim();
-            String[] andParts = trimmedPart.split("&&");
-            boolean allTrue = true;
-            for (String andPart : andParts) {
-                String[] conditionParts = andPart.trim().split("==");
-                if (conditionParts.length != 2) continue;
-                String attr = conditionParts[0].trim().replace("target.", "");
-                String value = conditionParts[1].trim();
-                if (element instanceof ScoreTimer timer) {
-                    switch (attr) {
-                        case "isRunning":
-                            allTrue &= timer.isRunning() == Boolean.parseBoolean(value);
-                            break;
-                        case "allowShift":
-                            allTrue &= timer.getAllowShift() == Boolean.parseBoolean(value);
-                            break;
-                        case "isUpCounting":
-                            allTrue &= timer.getIsUpCounting() == Boolean.parseBoolean(value);
-                            break;
-                    }
-                }
-                if (!allTrue) break;
-            }
-            if (allTrue) return true;
-        }
-        return false;
     }
 
     private void updateUI() {
@@ -904,20 +853,53 @@ public class ScoreboardController implements Initializable {
         if (!settingMode || promptLine1.isEmpty()) {
             line1LCD.setText(getTimerDisplayText());
         }
-/*
+
         for (Map.Entry<String, JsonObject> entry : buttonConfigs.entrySet()) {
             String fxId = entry.getKey();
             JsonObject config = entry.getValue();
             Button button = getButtonByFxId(fxId);
             if (button != null && config.has("disableWhen")) {
                 String condition = config.get("disableWhen").getAsString();
-                String target = config.get("target").getAsString();
-                ScoreElement element = ruleEngine.getElement(target);
-                boolean disable = evaluateCondition(condition, element);
-                button.setDisable(disable);
+                JsonArray targets = config.has("mainTargets") ? config.getAsJsonArray("mainTargets") : null;
+                for (JsonElement targetElem : targets) {
+                    String target = targetElem.getAsString();
+                    ScoreElement element = target != null ? ruleEngine.getElement(target) : null;
+                    boolean disable = evaluateCondition(condition, element);
+                    button.setDisable(disable);
+                }
             }
         }
-*/
+    }
+    
+    private boolean evaluateCondition(String condition, ScoreElement element) {
+        String[] parts = condition.split("\\|\\|");
+        for (String part : parts) {
+            String trimmedPart = part.trim();
+            String[] andParts = trimmedPart.split("&&");
+            boolean allTrue = true;
+            for (String andPart : andParts) {
+                String[] conditionParts = andPart.trim().split("==");
+                if (conditionParts.length != 2) continue;
+                String attr = conditionParts[0].trim().replace("mainTargets.", "");
+                String value = conditionParts[1].trim();
+                if (element instanceof ScoreTimer timer) {
+                    switch (attr) {
+                        case "isRunning":
+                            allTrue &= timer.isRunning() == Boolean.parseBoolean(value);
+                            break;
+                        case "allowShift":
+                            allTrue &= timer.getAllowShift() == Boolean.parseBoolean(value);
+                            break;
+                        case "isUpCounting":
+                            allTrue &= timer.getIsUpCounting() == Boolean.parseBoolean(value);
+                            break;
+                    }
+                }
+                if (!allTrue) break;
+            }
+            if (allTrue) return true;
+        }
+        return false;
     }
 
     private void startUITimer() {
