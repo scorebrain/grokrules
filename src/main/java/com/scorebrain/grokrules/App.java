@@ -1,24 +1,17 @@
 package com.scorebrain.grokrules;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-//import javafx.util.Duration;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier; // Added import
 import java.time.Instant;
@@ -55,12 +48,12 @@ public class App extends Application {
         stage.setScene(scene);
         stage.show();
     }
-
+/*
     private static Parent loadFXML(String fxml) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource(fxml + ".fxml"));
         return fxmlLoader.load();
     }
-
+*/
     public static void main(String[] args) {
         launch();
     }
@@ -124,6 +117,14 @@ class ScoreTimer implements ScoreElement {
     private String id;
     private long initialValue;
     private long currentValue;
+    private int currentHours;
+    private int currentMinutes;
+    private int currentSeconds;
+    private int currentMillis;
+    private int maxHours;
+    private int maxMinutes;
+    private int maxSeconds;
+    private int maxMillis;
     private boolean isRunning;
     private Instant startTimeStamp;
     private ScoreEventBus eventBus;
@@ -139,6 +140,7 @@ class ScoreTimer implements ScoreElement {
     private boolean canRollDown;
     private boolean allowShift;
     private String constrainWhen; // New field
+    private boolean visibility = true;
 
     public ScoreTimer(ScoreEventBus eventBus) {
         this.eventBus = eventBus;
@@ -151,6 +153,11 @@ class ScoreTimer implements ScoreElement {
         this.id = config.get("id").getAsString();
         this.initialValue = config.get("initialValue").getAsLong(); // Changed from initialSeconds
         this.currentValue = initialValue;
+        updateTimeUnits(initialValue);
+        this.maxHours = 9;
+        this.maxMinutes = 59;
+        this.maxSeconds = 59;
+        this.maxMillis = 999;
         this.isRunning = false;
         this.startTimeStamp = null;
         this.expiredNotified = false;
@@ -170,6 +177,7 @@ class ScoreTimer implements ScoreElement {
         this.flashZoneThreshold = config.has("flashZoneThreshold") ? config.get("flashZoneThreshold").getAsInt() : -1;
         this.flashZonePattern = config.has("flashZonePattern") ? config.get("flashZonePattern").getAsString() : null;
         this.constrainWhen = config.has("constrainWhen") ? config.get("constrainWhen").getAsString() : null;
+        this.visibility = config.has("initialVisibility") ? config.get("initialVisibility").getAsBoolean() : true;
 
         enforceConstraints(); // Apply constraints after initialization
     }
@@ -221,6 +229,7 @@ class ScoreTimer implements ScoreElement {
     public boolean startstop() {
         if (isRunning) {
             currentValue = getCurrentValueRaw();
+            updateTimeUnits(currentValue);
             isRunning = false;
             startTimeStamp = null;
             eventBus.notifyTimerStopped(id);
@@ -259,6 +268,7 @@ class ScoreTimer implements ScoreElement {
             }
         }
         long currentValue = getCurrentValue();
+        updateTimeUnits(currentValue);
         if (!isUpCounting && currentValue <= minValue && isRunning && !expiredNotified) {  // Reversed logic
             isRunning = false;
             startTimeStamp = null;
@@ -273,10 +283,12 @@ class ScoreTimer implements ScoreElement {
                 initialValue = minValue;
                 startTimeStamp = Instant.now().minusNanos(elapsedSinceStart % cycleLength);
                 currentValue = getCurrentValueRaw();
+                updateTimeUnits(currentValue);
             } else if (currentValue >= maxValue && !expiredNotified) {
                 isRunning = false;
                 startTimeStamp = null;
                 this.currentValue = maxValue;
+                updateTimeUnits(this.currentValue);
                 eventBus.notifyTimerExpired(id);
                 expiredNotified = true;
             }
@@ -285,6 +297,7 @@ class ScoreTimer implements ScoreElement {
 
     public void setValue(long nanos) {
         this.currentValue = Math.max(minValue, Math.min(maxValue, nanos));
+        updateTimeUnits(this.currentValue);
         if (!isRunning) {
             this.initialValue = currentValue;
         }
@@ -295,6 +308,7 @@ class ScoreTimer implements ScoreElement {
         long newValue = currentValue + 1_000_000_000L;
         if (newValue <= maxValue) {
             this.currentValue = newValue;
+            updateTimeUnits(this.currentValue);
             if (!isRunning) {
                 this.initialValue = currentValue;
             }
@@ -306,6 +320,7 @@ class ScoreTimer implements ScoreElement {
         long newValue = currentValue - 1_000_000_000L;
         if (newValue >= minValue) {
             this.currentValue = newValue;
+            updateTimeUnits(this.currentValue);
             if (!isRunning) {
                 this.initialValue = currentValue;
             }
@@ -332,6 +347,39 @@ class ScoreTimer implements ScoreElement {
             }
         }
         return currentValue;
+    }
+    
+    private void updateTimeUnits(long value) {
+        long timeShifter = value / 1_000_000L;
+        if (timeShifter < 1000) {
+            this.currentMillis = (int) timeShifter;
+            this.currentSeconds = 0;
+            this.currentMinutes = 0;
+            this.currentHours = 0;
+        } else {
+            this.currentMillis = (int) (timeShifter % 1_000L);
+            timeShifter = timeShifter / 1_000L;
+            if (timeShifter < 60) {
+                this.currentSeconds = (int) timeShifter;
+                this.currentMinutes = 0;
+                this.currentHours = 0;
+            } else {
+                this.currentSeconds = (int) (timeShifter % 60L);
+                timeShifter = timeShifter / 60L;
+                if (timeShifter < 60) {
+                    this.currentMinutes = (int) timeShifter;
+                    this.currentHours = 0;
+                } else {
+                    this.currentMinutes = (int) (timeShifter % 60);
+                    timeShifter = timeShifter / 60L;
+                    if (timeShifter < 10) {
+                        this.currentHours = (int) timeShifter;
+                    } else {
+                        this.currentHours = (int) (timeShifter % 10);
+                    }
+                }
+            }
+        }
     }
 
     public long getCurrentValue() {
@@ -363,6 +411,7 @@ class ScoreTimer implements ScoreElement {
             startstop();
         }
         currentValue = initialValue;
+        updateTimeUnits(currentValue);
         startTimeStamp = null;
         expiredNotified = false;
     }
@@ -400,6 +449,31 @@ class ScoreTimer implements ScoreElement {
         this.isUpCounting = value;
         enforceConstraints(); // Re-check constraints
     }
+    
+    public boolean isBlank() {
+        return !this.visibility;
+    }
+    
+    public void setIsBlank(boolean value) {
+        this.visibility = !value;
+    }
+    
+    public void setHoursMinutesSecondsMillis(int hours, int minutes, int seconds, int millis) {
+        System.out.println("you called? hours=" + hours + "  minutes=" + minutes + "  seconds=" + seconds + "  millis=" + millis);
+        System.out.println(maxHours + "   " + maxMinutes + "   " + maxSeconds + "   " + maxMillis);
+        if (hours <= this.maxHours && minutes <= this.maxMinutes && seconds <= this.maxSeconds && millis <= this.maxMillis) {
+            System.out.println("passed the test.");
+            this.currentHours = hours;
+            this.currentMinutes = minutes;
+            this.currentSeconds = seconds;
+            this.currentMillis = millis;
+            this.currentValue = (long) (millis * 1_000_000L + seconds * 1_000_000_000L + minutes * 60_000_000_000L + hours * 3_600_000_000L);
+            if (!isRunning) {
+                this.initialValue = currentValue;
+            }
+            this.expiredNotified = false;
+            }
+    }
 }
 
 // ScoreIndicator class
@@ -410,6 +484,7 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
     private String triggerEvent;
     private String pattern;
     private Supplier<String> selectedTimerSupplier; // Added field to track selected timer
+    private boolean visibility = true;
 
     public ScoreIndicator(String id, String observedTimerId, String triggerEvent, String pattern) {
         this.id = id;
@@ -426,6 +501,7 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
         this.observedTimerId = config.has("observedTimerId") ? config.get("observedTimerId").getAsString() : null;
         this.triggerEvent = config.has("triggerEvent") ? config.get("triggerEvent").getAsString() : null;
         this.pattern = config.has("pattern") ? config.get("pattern").getAsString() : null;
+        this.visibility = config.has("initialVisibility") ? config.get("initialVisibility").getAsBoolean() : true;
     }
 
     /** Sets the supplier that provides the currently selected timer ID. */
@@ -503,6 +579,14 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
     public String getDisplayValue() {
         return currentValue ? "*" : "";
     }
+    
+    public boolean isBlank() {
+        return !this.visibility;
+    }
+    
+    public void setIsBlank(boolean value) {
+        this.visibility = !value;
+    }
 }
 
 class ScoreCounter implements ScoreElement {
@@ -514,8 +598,9 @@ class ScoreCounter implements ScoreElement {
     private Integer rolloverValue;
     private boolean canRollUp;
     private boolean canRollDown;
-    private boolean blank = true; // Initialize as blank
-    private boolean leadingZero = false;
+    private boolean visibility = true;
+    private boolean leadingZeroTricks = false;
+    private boolean showLeadingZero = false;
 
     @Override
     public void initialize(JsonObject config) {
@@ -527,7 +612,9 @@ class ScoreCounter implements ScoreElement {
         this.canRollUp = config.has("canRollUp") ? config.get("canRollUp").getAsBoolean() : false;
         this.canRollDown = config.has("canRollDown") ? config.get("canRollDown").getAsBoolean() : false;
         this.rolloverValue = config.has("rolloverValue") ? config.get("rolloverValue").getAsInt() : null;
-        this.blank = true; // Ensure initial state is blank
+        this.visibility = config.has("initialVisibility") ? config.get("initialVisibility").getAsBoolean() : true;
+        this.leadingZeroTricks = config.has("leadingZeroTricks") ? config.get("leadingZeroTricks").getAsBoolean() : false;
+        this.showLeadingZero = config.has("showLeadingZero") ? config.get("showLeadingZero").getAsBoolean() : false;
     }
 
     @Override
@@ -573,24 +660,11 @@ class ScoreCounter implements ScoreElement {
         }
     }
 
-    public void setBlank(boolean blank) {
-        this.blank = blank;
-    }
-
-    public boolean isBlank() {
-        return blank;
-    }
-
-    public void setLeadingZero(boolean leadingZero) {
-        this.leadingZero = leadingZero;
-    }
-
-    public boolean getLeadingZero() {
-        return leadingZero;
-    }
-
     public void setCurrentValue(int value) {
-        currentValue = Math.max(minValue, Math.min(value, maxValue));
+        if (value >= this.minValue && value <= this.maxValue) {
+            currentValue = value;
+        }
+        //currentValue = Math.max(minValue, Math.min(value, maxValue));
     }
 
     public int getCurrentValue() {
@@ -608,6 +682,30 @@ class ScoreCounter implements ScoreElement {
 
     public int getMaxValue() {
         return maxValue;
+    }
+    
+    public boolean isBlank() {
+        return !this.visibility;
+    }
+    
+    public void setIsBlank(boolean value) {
+        this.visibility = !value;
+    }
+    
+    public boolean hasLeadingZeroTricks() {
+        return this.leadingZeroTricks;
+    }
+    
+    public void setLeadingZeroTricks(boolean value) {
+        this.leadingZeroTricks = value;
+    }
+    
+    public boolean showLeadingZero() {
+        return this.showLeadingZero;
+    }
+    
+    public void setShowLeadingZero(boolean value) {
+        this.showLeadingZero = value;
     }
 }
 

@@ -247,7 +247,6 @@ public class ScoreboardController implements Initializable {
     }
 
     private void startHoldTimer(String fxId) {
-        System.out.println("Hold Timer started.");
         JsonObject config = buttonConfigs.get(fxId);
         if (config.has("alt1")) {
             JsonObject alt1 = config.getAsJsonObject("alt1");
@@ -266,7 +265,6 @@ public class ScoreboardController implements Initializable {
         if (timeline != null) {
             timeline.stop();
             holdTimers.remove(fxId);
-            System.out.println("Timeline stopped. Does this line ever print?");
         }
         JsonObject config = buttonConfigs.get(fxId);
         String action = config.has("mainAction") ? config.get("mainAction").getAsString() : "none";
@@ -474,40 +472,28 @@ public class ScoreboardController implements Initializable {
                 settingCursorMax = 3;
             }
         } else if (!"none".equals(settingCounterId) || (!"none".equals(settingTimerId) && !"none".equals(settingAttribute)) || (!"none".equals(settingIndicatorId) && !"none".equals(settingAttribute))) {
-            if (settingCounterId.equals("playerNumber")) {
-				// This should not be coupled
-                String currentInput = inputBuffer.toString().trim();
-                if (currentInput.equals("00") && inputBuffer.length() == 2) {
-                    inputBuffer.setLength(0);
-                    inputBuffer.append(number);
-                } else {
-                    inputBuffer.append(number);
-                    if (inputBuffer.length() > 2) {
-                        inputBuffer.deleteCharAt(0);
-                    }
-                }
-                String input = inputBuffer.toString().trim();
-                String displayInput = input.length() == 1 ? " " + input : input;
-                line2LCD.setText(settingPromptLine2.substring(0, bracketStart + 1) + displayInput + ">");
-                settingCursorMax = 2;
-            } else if (settingCounterId.equals("playerFoul")) {
-				// This should not be coupled
-                inputBuffer.setLength(0);
+            int digitCount = format.replaceAll("[^N]", "").length();
+            settingCursorMax = digitCount;
+            if (inputBuffer.length() == 0) {
+                inputBuffer.append(" ".repeat(digitCount - 1)).append(number);
+            } else if (inputBuffer.length() < digitCount) {
                 inputBuffer.append(number);
-                line2LCD.setText(settingPromptLine2.substring(0, bracketStart + 1) + number + ">");
-                settingCursorMax = 1;
+                System.out.println("append number");
             } else {
-                int digitCount = format.replaceAll("[^N]", "").length();
-                if (inputBuffer.length() == 0) {
+                boolean zeroCluster = false;
+                if (!"none".equals(settingCounterId)) {
+                    ScoreCounter counter = (ScoreCounter) ruleEngine.getElement(settingCounterId);
+                    zeroCluster = counter.hasLeadingZeroTricks();
+                }
+                String input = inputBuffer.toString();
+                if (zeroCluster && Integer.parseInt(input.trim()) == 0 && input.charAt(0) == '0') {
+                    inputBuffer.setLength(0);
                     inputBuffer.append(" ".repeat(digitCount - 1)).append(number);
-                } else if (inputBuffer.length() < digitCount) {
-                    inputBuffer.append(number);
                 } else {
                     inputBuffer.deleteCharAt(0).append(number);
                 }
-                line2LCD.setText(settingPromptLine2.substring(0, bracketStart + 1) + inputBuffer.toString() + ">");
-                settingCursorMax = digitCount;
             }
+            line2LCD.setText(settingPromptLine2.substring(0, bracketStart + 1) + inputBuffer.toString() + ">");
         } else if (!"none".equals(settingIndicatorId)) {
             if (inputBuffer.length() == 0) {
                     inputBuffer.append(number);
@@ -520,7 +506,7 @@ public class ScoreboardController implements Initializable {
     }
     
     private void handleEnterClick() {
-        if (!settingMode || isInitialPrompt || inputBuffer.length() == 0 || settingPromptLine2 == null) {
+        if (!settingMode || isInitialPrompt || inputBuffer.length() == 0 || "none".equals(settingPromptLine2)) {
             abortSetFunction();
             return;
         }
@@ -529,53 +515,75 @@ public class ScoreboardController implements Initializable {
         String format = settingPromptLine2.substring(bracketStart + 1, bracketEnd);
         if (!"none".equals(settingTimerId)) {
             ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(settingTimerId);
+            timer.setIsBlank(false);
             if ("none".equals(settingAttribute)) {
                 long nanos = parseInput(format, inputBuffer.toString().trim());
                 // This needs to be modified to deal with poorly formatted time values
-                if (nanos >= timer.getMinValue() && nanos <= timer.getMaxValue()) {
-                    timer.setValue(nanos);
+                System.out.println("format = " + format + "   input buffer = " + inputBuffer);
+                int hours = 0;
+                int minutes = 0;
+                int seconds = 0;
+                int millis = 0;
+                if ("MM:SS".equals(format)) {
+                    if (inputBuffer.length() == 1 || inputBuffer.length() == 2) {
+                        seconds = Integer.parseInt(inputBuffer.toString().trim());
+                    } else if (inputBuffer.length() == 3) {
+                        seconds = Integer.parseInt(inputBuffer.substring(1,3).toString());
+                        minutes = Integer.parseInt(inputBuffer.substring(0,1).toString().trim());
+                    } else if (inputBuffer.length() == 4) {
+                        seconds = Integer.parseInt(inputBuffer.substring(2,4).toString());
+                        minutes = Integer.parseInt(inputBuffer.substring(0,2).toString().trim());
+                    }
+                } else if ("SS.X".equals(format)) {
+                    if (inputBuffer.length() == 1) {
+                        millis = Integer.parseInt(inputBuffer.toString().trim()) * 100;
+                    } else if (inputBuffer.length() == 2) {
+                        millis = Integer.parseInt(inputBuffer.substring(1,2).toString()) * 100;
+                        seconds = Integer.parseInt(inputBuffer.substring(0,1).toString().trim());
+                    } else if (inputBuffer.length() == 3) {
+                        millis = Integer.parseInt(inputBuffer.substring(2,3).toString()) * 100;
+                        seconds = Integer.parseInt(inputBuffer.substring(0,2).toString().trim());
+                    }
                 }
+                System.out.println("Minutes: " + minutes + "  Seconds: " + seconds + "  Millis: " + millis);
+                timer.setHoursMinutesSecondsMillis(hours, minutes, seconds, millis);
+                //if (nanos >= timer.getMinValue() && nanos <= timer.getMaxValue()) {
+                //    timer.setValue(nanos);
+                //}
             } else if ("allowShift".equals(settingAttribute)) {
-                // This does not return to the default value for entries > 1
-                boolean newValue = inputBuffer.toString().trim().equals("1");
-                timer.setAllowShift(newValue);
+                int checker = Integer.parseInt(inputBuffer.toString().trim());
+                if (checker == 0 || checker == 1) {
+                    timer.setAllowShift(checker == 1 ? true : false);
+                }
             } else if ("isUpCounting".equals(settingAttribute)) {
-                // This does not return to the default value for entries > 1
-                boolean newValue = inputBuffer.toString().trim().equals("1");
-                timer.setIsUpCounting(newValue);
+                int checker = Integer.parseInt(inputBuffer.toString().trim());
+                if (checker == 0 || checker == 1) {
+                    timer.setIsUpCounting(checker == 1 ? true : false);
+                }
             }
-            System.out.println("what happened?");
             settingTimerId = "none";
         } else if (!"none".equals(settingCounterId)) {
             ScoreCounter counter = (ScoreCounter) ruleEngine.getElement(settingCounterId);
             String input = inputBuffer.toString().trim();
-            // Should be looking at settingAttribute here...
-            if (settingCounterId.equals("playerNumber")) {
-                // Should not be coupled like this
-                if (input.length() == 1) {
-                    int value = Integer.parseInt(input);
-                    counter.setCurrentValue(value);
-                    counter.setLeadingZero(false);
-                    counter.setBlank(false);
-                } else if (input.length() == 2) {
-                    int value = Integer.parseInt(input);
-                    counter.setCurrentValue(value);
-                    counter.setLeadingZero(input.charAt(0) == '0');
-                    counter.setBlank(false);
+            if (!"".equals(input)) {
+                int newValue = Integer.parseInt(input);
+                counter.setCurrentValue(newValue);
+                // Could try to check the results of setCurrentValue before allowing the changes below...
+                counter.setIsBlank(false);
+                if (counter.hasLeadingZeroTricks()) {
+                    if (input.length() > 1 && input.charAt(0) == '0') {
+                        counter.setShowLeadingZero(true);
+                    } else {
+                        counter.setShowLeadingZero(false);
+                    }
                 }
-            } else if (settingCounterId.equals("playerFoul")) {
-                // Should not be coupled like this
-                int value = Integer.parseInt(input);
-                counter.setCurrentValue(value);
-                counter.setBlank(false);
             } else {
-                int value = Integer.parseInt(input);
-                counter.setCurrentValue(value);
-                counter.setBlank(false);
+                System.out.println("User input is blank.");
             }
             settingCounterId = "none";
         } else if (!"none".equals(settingIndicatorId)) {
             ScoreIndicator indicator = (ScoreIndicator) ruleEngine.getElement(settingIndicatorId);
+            indicator.setIsBlank(false);
             if ("none".equals(settingAttribute)) {
                 boolean newValue = inputBuffer.toString().trim().equals("1");
                 indicator.setCurrentValue(newValue);
@@ -809,7 +817,7 @@ public class ScoreboardController implements Initializable {
             int value = playerNumber.getCurrentValue();
             if (value >= 10) {
                 numberStr = String.format("%2d", value);
-            } else if (playerNumber.getLeadingZero()) {
+            } else if (playerNumber.showLeadingZero()) {
                 numberStr = String.format("0%d", value);
             } else {
                 numberStr = String.format(" %d", value);

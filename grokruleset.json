@@ -13,7 +13,8 @@
       "thresholds": [10],
       "flashZoneThreshold": 10,
       "flashZonePattern": "400:true,100:false",
-      "constrainWhen": "isUpCounting == true -> allowShift = false"
+      "constrainWhen": "isUpCounting == true -> allowShift = false",
+	  "initialVisibility": true
     },
 	{
       "type": "ScoreIndicator",
@@ -107,7 +108,8 @@
       "maxValue": 9,
 	  "rolloverValue": 4,
       "canRollUp": true,
-      "canRollDown": false
+      "canRollDown": false,
+	  "initialVisibility": true
     },
     {
       "type": "ScoreCounter",
@@ -116,7 +118,8 @@
       "minValue": 0,
       "maxValue": 199,
 	  "canRollUp": true,
-      "canRollDown": false
+      "canRollDown": false,
+	  "initialVisibility": true
     },
     {
       "type": "ScoreCounter",
@@ -125,7 +128,8 @@
       "minValue": 0,
       "maxValue": 199,
 	  "canRollUp": true,
-      "canRollDown": false
+      "canRollDown": false,
+	  "initialVisibility": true
     },
 	{
       "type": "ScoreIndicator",
@@ -164,7 +168,8 @@
       "minValue": 0,
       "maxValue": 9,
       "canRollUp": false,
-      "canRollDown": false
+      "canRollDown": false,
+	  "initialVisibility": false
     },
 	{
       "type": "ScoreCounter",
@@ -173,7 +178,9 @@
       "minValue": 0,
       "maxValue": 99,
       "canRollUp": false,
-      "canRollDown": false
+      "canRollDown": false,
+	  "initialVisibility": false,
+	  "leadingZeroTricks": true
     },
 	{
       "type": "ScoreCounter",
@@ -182,7 +189,8 @@
       "minValue": 0,
       "maxValue": 19,
       "canRollUp": true,
-      "canRollDown": false
+      "canRollDown": false,
+	  "initialVisibility": true
     },
 	{
       "type": "ScoreCounter",
@@ -191,7 +199,8 @@
       "minValue": 0,
       "maxValue": 19,
       "canRollUp": true,
-      "canRollDown": false
+      "canRollDown": false,
+	  "initialVisibility": true
     }
   ],
   "uiConfig": {
