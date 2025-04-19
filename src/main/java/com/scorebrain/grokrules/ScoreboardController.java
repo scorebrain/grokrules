@@ -62,8 +62,9 @@ public class ScoreboardController implements Initializable {
     @FXML private Button buttonF8, buttonF6, buttonF4, buttonF2, buttonF1;
     @FXML private Button buttonG8, buttonG7, buttonG6;
     @FXML private VBox textScoreboard;
-    @FXML private Label line1Label, line2Label, line3Label, line4Label, line5Label, line6Label, line7Label, line8Label, line9Label;
     private Label mainTimerLabel, team1PointsLabel, team2PointsLabel, periodLabel;
+    private Label team1PossLabel, team2PossLabel, team1Bonus1Label, team2Bonus1Label, team1Bonus2Label, team2Bonus2Label;
+    private Label team1FoulsLabel, team2FoulsLabel, team1TOLLabel, team2TOLLabel, playerNumberLabel, playerFoulLabel;
     private Text mainHornLeft, mainHornRight;
 
     @Override
@@ -104,8 +105,8 @@ public class ScoreboardController implements Initializable {
         Label team2Label = createStyledLabel("           H O M E", "scoreboard-timer");
         line1.getChildren().add(team2Label);
         textScoreboard.getChildren().add(line1);
-
-        Label line2 = createStyledLabel("   POINTS                              POINTS", "scoreboard-text-line");
+        
+                Label line2 = createStyledLabel("   POINTS                              POINTS", "scoreboard-text-line");
         textScoreboard.getChildren().add(line2);
 
         HBox line3 = new HBox();
@@ -118,10 +119,20 @@ public class ScoreboardController implements Initializable {
         line3.getChildren().add(team2PointsLabel);
         textScoreboard.getChildren().add(line3);
 
-        line4Label.setText("   ? B B                                B B ?");
-        line4Label.getStyleClass().clear();
-        line4Label.getStyleClass().add("scoreboard-text-line");
-        textScoreboard.getChildren().add(line4Label);
+        HBox line4 = new HBox();
+        team1PossLabel = createStyledLabel("   <", "scoreboard-text-line");
+        line4.getChildren().add(team1PossLabel);
+        team1Bonus2Label = createStyledLabel(" B", "scoreboard-text-line");
+        line4.getChildren().add(team1Bonus2Label);
+        team1Bonus1Label = createStyledLabel(" B", "scoreboard-text-line");
+        line4.getChildren().add(team1Bonus1Label);
+        team2Bonus1Label = createStyledLabel("                               B", "scoreboard-text-line");
+        line4.getChildren().add(team2Bonus1Label);
+        team2Bonus2Label = createStyledLabel(" B", "scoreboard-text-line");
+        line4.getChildren().add(team2Bonus2Label);
+        team2PossLabel = createStyledLabel(" >", "scoreboard-text-line");
+        line4.getChildren().add(team2PossLabel);
+        textScoreboard.getChildren().add(line4);
 
         Label line5 = createStyledLabel(" ", "scoreboard-text-line");
         textScoreboard.getChildren().add(line5);
@@ -129,10 +140,20 @@ public class ScoreboardController implements Initializable {
         Label line6 = createStyledLabel(" FOULS  TOL      PLAYER - FOUL      TOL   FOULS", "scoreboard-text-line");
         textScoreboard.getChildren().add(line6);
 
-        line7Label.setText("  00     0                    0         0     00");
-        line7Label.getStyleClass().clear();
-        line7Label.getStyleClass().add("scoreboard-text-line");
-        textScoreboard.getChildren().add(line7Label);
+        HBox line7 = new HBox();
+        team1FoulsLabel = createStyledLabel("  00", "scoreboard-text-line");
+        line7.getChildren().add(team1FoulsLabel);
+        team1TOLLabel = createStyledLabel("     0", "scoreboard-text-line");
+        line7.getChildren().add(team1TOLLabel);
+        playerNumberLabel = createStyledLabel("          00", "scoreboard-text-line");
+        line7.getChildren().add(playerNumberLabel);
+        playerFoulLabel = createStyledLabel("     0", "scoreboard-text-line");
+        line7.getChildren().add(playerFoulLabel);
+        team2TOLLabel = createStyledLabel("         0", "scoreboard-text-line");
+        line7.getChildren().add(team2TOLLabel);
+        team2FoulsLabel = createStyledLabel("     00", "scoreboard-text-line");
+        line7.getChildren().add(team2FoulsLabel);
+        textScoreboard.getChildren().add(line7);
 
         Label line8 = createStyledLabel(" ", "scoreboard-text-line");
         textScoreboard.getChildren().add(line8);
@@ -791,43 +812,41 @@ public class ScoreboardController implements Initializable {
         ScoreCounter team1Fouls = (ScoreCounter) ruleEngine.getElement("team1Fouls");
         ScoreCounter team2Fouls = (ScoreCounter) ruleEngine.getElement("team2Fouls");
 
-        StringBuilder line4Text = new StringBuilder("   ");
-        line4Text.append(team1Poss != null && team1Poss.getCurrentValue() ? "< " : "  ");
-        line4Text.append(team1Bonus2 != null && team1Bonus2.getCurrentValue() ? "B " : "  ");
-        line4Text.append(team1Bonus1 != null && team1Bonus1.getCurrentValue() ? "B " : "  ");
-        line4Text.append("                               ");
-        line4Text.append(team2Bonus1 != null && team2Bonus1.getCurrentValue() ? "B " : "  ");
-        line4Text.append(team2Bonus2 != null && team2Bonus2.getCurrentValue() ? "B " : "  ");
-        line4Text.append(team2Poss != null && team2Poss.getCurrentValue() ? "> " : "  ");
-        line4Label.setText(line4Text.toString());
-
-        StringBuilder line7Text = new StringBuilder("  00     0                           0     00");
-        if (team1Fouls != null) {
-            int value = team1Fouls.getCurrentValue();
-            String foulsStr = (value < 10) ? " " + value : String.valueOf(value);
-            line7Text.replace(2, 4, foulsStr);
-        }
-        if (team2Fouls != null) {
-            int value = team2Fouls.getCurrentValue();
-            String foulsStr = (value < 10) ? " " + value : String.valueOf(value);
-            line7Text.replace(43, 45, foulsStr);
-        }
-        if (playerNumber != null && !playerNumber.isBlank()) {
-            String numberStr;
-            int value = playerNumber.getCurrentValue();
-            if (value >= 10) {
-                numberStr = String.format("%2d", value);
-            } else if (playerNumber.showLeadingZero()) {
-                numberStr = String.format("0%d", value);
+        team1PossLabel.setText(team1Poss != null && team1Poss.getCurrentValue() ? "   <" : "    ");
+        team1Bonus2Label.setText(team1Bonus2 != null && team1Bonus2.getCurrentValue() ? " B" : "  ");
+        team1Bonus1Label.setText(team1Bonus1 != null && team1Bonus1.getCurrentValue() ? " B" : "  ");
+        team2Bonus1Label.setText(team2Bonus1 != null && team2Bonus1.getCurrentValue() ? "                               B" : "                                ");
+        team2Bonus2Label.setText(team2Bonus2 != null && team2Bonus2.getCurrentValue() ? " B" : "  ");
+        team2PossLabel.setText(team2Poss != null && team2Poss.getCurrentValue() ? " >" : "  ");
+        
+        team1FoulsLabel.setText(team1Fouls != null ? String.format("  %2d", team1Fouls.getCurrentValue()) : "   0");
+        team1TOLLabel.setText("     0");
+        if (playerNumber != null) {
+            if (playerNumber.isBlank()) {
+                playerNumberLabel.setText("            ");
             } else {
-                numberStr = String.format(" %d", value);
+                String numberStr;
+                int value = playerNumber.getCurrentValue();
+                if (value >= 10) {
+                    numberStr = String.format("%2d", value);
+                } else if (playerNumber.showLeadingZero()) {
+                    numberStr = String.format("0%d", value);
+                } else {
+                    numberStr = String.format(" %d", value);
+                }
+            playerNumberLabel.setText("          " + numberStr);
             }
-            line7Text.replace(20, 22, numberStr);
         }
-        if (playerFoul != null && !playerFoul.isBlank()) {
-            line7Text.replace(27, 28, String.valueOf(playerFoul.getCurrentValue()));
+        if (playerFoul != null) {
+            if (playerFoul.isBlank()) {
+                playerFoulLabel.setText("      ");
+            } else {
+                playerFoulLabel.setText("     " + playerFoul.getCurrentValue());
+            }
         }
-        line7Label.setText(line7Text.toString());
+        team2TOLLabel.setText("         0");
+        team2FoulsLabel.setText("     00");
+        team2FoulsLabel.setText(team2Fouls != null ? String.format("     %2d", team2Fouls.getCurrentValue()) : "      0");
 
         if (!settingMode) {
             StringBuilder lcdLine2 = new StringBuilder("                ");
