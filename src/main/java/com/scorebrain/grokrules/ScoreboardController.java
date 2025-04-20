@@ -31,6 +31,7 @@ public class ScoreboardController implements Initializable {
     private StringBuilder inputBuffer = new StringBuilder();
     private Timeline uiTimer;
     private Timeline hornTimeline;
+    private boolean buttonAlreadyHandled = false;
     private boolean settingMode = false;
     private Timeline flashTimeline;
     private boolean isFlashing = false;
@@ -185,25 +186,38 @@ public class ScoreboardController implements Initializable {
                     if (button != null) {
                         // Checking buttonE7 and buttonE8 explicitly is bad coupling.  Fix this later!!
                         if (fxId.equals("buttonE8") || fxId.equals("buttonE7")) {
+                            button.setMinHeight(55);
+                            button.setMaxHeight(55);
+                            button.setPrefHeight(55);
                             VBox content = new VBox(2);
                             content.setAlignment(Pos.CENTER);
                             Label teamLabel = new Label("TEAM");
-                            teamLabel.getStyleClass().add("basketball-small-text");
+                            teamLabel.getStyleClass().add("basketball-smaller-text");
+                            teamLabel.setStyle("-fx-font-size: 7.5");
                             Label foulsLabel = new Label("FOULS");
-                            foulsLabel.getStyleClass().add("basketball-small-text");
+                            foulsLabel.getStyleClass().add("basketball-smaller-text");
+                            foulsLabel.setStyle("-fx-font-size: 7.5");
                             Rectangle blueLine = new Rectangle(38, 2, Color.web("#011e41"));
                             Label pointsLabel = new Label("POINTS");
                             pointsLabel.getStyleClass().add("gray-small-text");
+                            pointsLabel.setStyle("-fx-font-size: 6.5");
                             Rectangle grayLine = new Rectangle(29, 1, Color.web("#555555"));
                             Label wonLabel = new Label("WON");
                             wonLabel.getStyleClass().add("gray-small-text");
+                            wonLabel.setStyle("-fx-font-size: 6.5");
                             content.getChildren().addAll(teamLabel, foulsLabel, blueLine, pointsLabel, grayLine, wonLabel);
                             button.setGraphic(content);
                             button.setText("");
                         } else {
                             button.setText(btnConfig.get("label").getAsString());
+                            if (fxId.equals("buttonB2") || fxId.equals("buttonB3") || fxId.equals("buttonB4")
+                                    || fxId.equals("buttonC2") || fxId.equals("buttonC3") || fxId.equals("buttonC4")
+                                    || fxId.equals("buttonD2") || fxId.equals("buttonD3") || fxId.equals("buttonD4")
+                                    || fxId.equals("buttonE3")) {
+                                button.setStyle("-fx-font-size: 16");
+                            }
                         }
-                        button.getStyleClass().removeAll("button");
+                        //button.getStyleClass().removeAll("button");
                         button.getStyleClass().add("basketball-text");
                         button.setWrapText(true);
                         buttonToFxIdMap.put(button, fxId);
@@ -274,14 +288,35 @@ public class ScoreboardController implements Initializable {
             int duration = alt1.get("alt1Duration").getAsInt();
             Timeline timer = new Timeline(new KeyFrame(Duration.millis(duration), e -> {
                 isHeld.put(fxId, true);
+                handleButtonEvent(fxId);
             }));
             timer.setCycleCount(1);
             holdTimers.put(fxId, timer);
             timer.play();
         }
+        handleButtonPress(fxId);
+    }
+    
+    private void handleButtonPress(String fxId) {
+        JsonObject config = buttonConfigs.get(fxId);
+        String action = config.has("mainAction") ? config.get("mainAction").getAsString() : "none";
+        JsonArray targets = config.has("mainTargets") ? config.getAsJsonArray("mainTargets") : null;
+        if (settingMode && ("setCurrentValue".equals(action) || "setAttributeValue".equals(action) 
+                || "increment".equals(action) || "decrement".equals(action) || "toggle".equals(action))) {
+            abortSetFunction();
+            buttonAlreadyHandled = true;
+        }
+    }
+    
+    private void handleButtonRelease(String fxId) {
+        if (!buttonAlreadyHandled) {
+            handleButtonEvent(fxId);
+        }
+        buttonAlreadyHandled = false;
     }
 
-    private void handleButtonRelease(String fxId) {
+    private void handleButtonEvent(String fxId) {
+        buttonAlreadyHandled = true;
         Timeline timeline = holdTimers.get(fxId);
         if (timeline != null) {
             timeline.stop();
