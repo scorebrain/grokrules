@@ -17,6 +17,18 @@
 	  "initialVisibility": true
     },
 	{
+      "type": "ScoreTimer",
+      "id": "shotTimer",
+      "initialValue": 35000000000,
+      "isUpCounting": false,
+      "allowShift": false,
+      "minValue": 0,
+      "maxValue": 99000000000,
+      "canRollUp": false,
+      "canRollDown": false,
+	  "initialVisibility": true
+    },
+	{
       "type": "ScoreIndicator",
       "id": "periodTimer_Horn",
       "initialValue": false,
@@ -29,6 +41,54 @@
       "id": "manual_Horn",
       "initialValue": false,
       "pattern": "1500:true"
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "mainLeft_Horn",
+      "initialValue": false,
+      "observedTimerId": "periodTimer",
+      "triggerEvent": "expired",
+      "pattern": "700:true,300:false,300:true,300:false,300:true,300:false"
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "mainRight_Horn",
+      "initialValue": false,
+      "observedTimerId": "periodTimer",
+      "triggerEvent": "expired",
+      "pattern": "700:true,300:false,300:true,300:false,300:true,300:false"
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "visualRight_Horn",
+      "initialValue": false,
+      "observedTimerId": "periodTimer",
+      "triggerEvent": "expired",
+      "pattern": "4000:true"
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "visualLeft_Horn",
+      "initialValue": false,
+      "observedTimerId": "periodTimer",
+      "triggerEvent": "expired",
+      "pattern": "3500:true"
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "backboardLight_Horn",
+      "initialValue": false,
+      "observedTimerId": "periodTimer",
+      "triggerEvent": "expired",
+      "pattern": "4500:true"
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "shotTimer_Horn",
+      "initialValue": false,
+      "observedTimerId": "shotTimer",
+      "triggerEvent": "expired",
+      "pattern": "200:true,200:false,200:true,200:false,200:true,200:false"
     },
 	{
       "type": "ScoreTimer",
@@ -201,6 +261,26 @@
       "canRollUp": true,
       "canRollDown": false,
 	  "initialVisibility": true
+    },
+	{
+      "type": "ScoreCounter",
+      "id": "team1TimeOuts",
+      "initialValue": 5,
+      "minValue": 0,
+      "maxValue": 9,
+      "canRollUp": true,
+      "canRollDown": true,
+	  "initialVisibility": true
+    },
+	{
+      "type": "ScoreCounter",
+      "id": "team2TimeOuts",
+      "initialValue": 5,
+      "minValue": 0,
+      "maxValue": 9,
+      "canRollUp": true,
+      "canRollDown": true,
+	  "initialVisibility": true
     }
   ],
   "uiConfig": {
@@ -235,6 +315,20 @@
       {"fxId": "buttonF2", "label": "HORN", "mainAction": "activate", "mainTargets": ["manual_Horn"]},
       {"fxId": "buttonF1", "label": "CLOCK ON / OFF", "mainAction": "pause", "mainTargets": ["periodTimer"]},
 	  {"fxId": "buttonE1", "label": "QTR./ PERIOD +1", "mainAction": "increment", "mainTargets": ["periodCount"]},
+	  {"fxId": "buttonB1", "label": "GUEST TEAM TIME OUTS", "mainAction": "decrement", "mainTargets": ["team1TimeOuts"],
+        "alt1": {
+          "alt1Duration": 1500,
+          "alt1Action": "setCurrentValue",
+          "alt1Targets": ["team1TimeOuts"],
+		  "alt1PromptLine2": "SET T.O.L.   <N>"
+        }},
+	  {"fxId": "buttonD1", "label": "HOME TEAM TIME OUTS", "mainAction": "decrement", "mainTargets": ["team2TimeOuts"],
+        "alt1": {
+          "alt1Duration": 1500,
+          "alt1Action": "setCurrentValue",
+          "alt1Targets": ["team2TimeOuts"],
+		  "alt1PromptLine2": "SET T.O.L.   <N>"
+        }},
 	  {
         "fxId": "buttonF4",
         "label": "POSS",
@@ -295,6 +389,13 @@
           "alt1Targets": ["team2Fouls"],
 		  "alt1PromptLine2": "SET FOULS   <NN>"
         }
+      },
+	  {
+        "fxId": "buttonG8",
+        "label": "SHOT CLOCKS",
+        "mainAction": "setCurrentValue",
+        "mainTargets": ["shotTimer"],
+		"mainPromptLine2": "CURRENT TIME<SS>"
       }
     ]
   }

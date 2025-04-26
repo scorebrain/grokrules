@@ -484,7 +484,7 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
     private String triggerEvent;
     private String pattern;
     private Supplier<String> selectedTimerSupplier; // Added field to track selected timer
-    private boolean visibility = true;
+    private boolean visibility = false;
 
     public ScoreIndicator(String id, String observedTimerId, String triggerEvent, String pattern) {
         this.id = id;
@@ -492,6 +492,7 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
         this.triggerEvent = triggerEvent;
         this.pattern = pattern;
         this.currentValue = false;
+        this.visibility = false;
     }
 
     @Override
@@ -501,7 +502,7 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
         this.observedTimerId = config.has("observedTimerId") ? config.get("observedTimerId").getAsString() : null;
         this.triggerEvent = config.has("triggerEvent") ? config.get("triggerEvent").getAsString() : null;
         this.pattern = config.has("pattern") ? config.get("pattern").getAsString() : null;
-        this.visibility = config.has("initialVisibility") ? config.get("initialVisibility").getAsBoolean() : true;
+        this.visibility = config.has("initialVisibility") ? config.get("initialVisibility").getAsBoolean() : false;
     }
 
     /** Sets the supplier that provides the currently selected timer ID. */
@@ -763,15 +764,6 @@ class RuleEngine {
                 } else {
                     continue;
                 }
-/*
-                if (scoreElement instanceof ScoreIndicator) {
-                    ScoreIndicator indicator = (ScoreIndicator) scoreElement;
-                    String timerId = config.has("observedTimerId") ? config.get("observedTimerId").getAsString() : null;
-                    if (timerId != null) {
-                        eventBus.registerTimerObserver(timerId, indicator);
-                    }
-                }
-*/
             }
             System.out.println("RuleEngine loaded, timerIds: " + timerIds); // Debug output
         } catch (Exception e) {
