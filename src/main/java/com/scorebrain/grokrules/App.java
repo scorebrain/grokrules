@@ -533,9 +533,9 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
     public void onTimerExpired(String timerId) {
         if (timerId.equals(observedTimerId) && "expired".equals(triggerEvent)) {
             // Only activate if the timer is currently selected
-            if (selectedTimerSupplier != null && timerId.equals(selectedTimerSupplier.get())) {
+            //if (selectedTimerSupplier != null && timerId.equals(selectedTimerSupplier.get())) {
                 setCurrentValue(true);
-            }
+            //}
         }
     }
 
@@ -548,9 +548,9 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
                     int triggerThreshold = Integer.parseInt(parts[1]);
                     if (triggerThreshold == threshold) {
                         // Only activate if the timer is currently selected
-                        if (selectedTimerSupplier != null && timerId.equals(selectedTimerSupplier.get())) {
+                        //if (selectedTimerSupplier != null && timerId.equals(selectedTimerSupplier.get())) {
                             setCurrentValue(true);
-                        }
+                        //}
                     }
                 } catch (NumberFormatException e) {
                     // Ignore if threshold value is malformed
@@ -779,10 +779,10 @@ class RuleEngine {
     public Collection<ScoreElement> getElements() {
         return elements.values();
     }
-    
+    /*
     public List<String> getTimerIds() {
         return timerIds;
-    }
+    }*/
     
     public JsonObject getUiConfig() {
         return uiConfig;

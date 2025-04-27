@@ -5,7 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import javafx.animation.KeyFrame;
@@ -13,7 +12,6 @@ import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.text.Text;
 import javafx.util.Duration;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
@@ -26,11 +24,11 @@ import javafx.scene.paint.Color;
 public class ScoreboardController implements Initializable {
 
     private RuleEngine ruleEngine = new RuleEngine("grokruleset.json");
-    private List<String> timerIds;
-    private int currentTimerIndex = 0;
+    //private List<String> timerIds;
+    // private int currentTimerIndex = 0;
     private StringBuilder inputBuffer = new StringBuilder();
     private Timeline uiTimer;
-    private Timeline hornTimeline;
+    // private Timeline hornTimeline;
     private boolean buttonAlreadyHandled = false;
     private boolean settingMode = false;
     private Timeline flashTimeline;
@@ -74,15 +72,16 @@ public class ScoreboardController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
-            timerIds = ruleEngine.getTimerIds();
+            //timerIds = ruleEngine.getTimerIds();
             setupScoreboard();
             resetUI();
             startUITimer();
+            /*
             for (ScoreElement element : ruleEngine.getElements()) {
                 if (element instanceof ScoreIndicator) {
                     ((ScoreIndicator) element).setSelectedTimerSupplier(this::getSelectedTimerId);
                 }
-            }
+            }*/
         } catch (Exception e) {
             System.err.println("Exception in initialize:");
             e.printStackTrace();
@@ -303,10 +302,10 @@ public class ScoreboardController implements Initializable {
             default: return null;
         }
     }
-
+/*
     public String getSelectedTimerId() {
         return timerIds.get(currentTimerIndex);
-    }
+    }*/
 
     private void startHoldTimer(String fxId) {
         JsonObject config = buttonConfigs.get(fxId);
@@ -796,14 +795,15 @@ public class ScoreboardController implements Initializable {
     }
 
     private void updateUI() {
+        /*
         if (timerIds == null || timerIds.isEmpty()) {
             mainTimerLabel.setText("00:00");
             team1PointsLabel.setText("000");
             team2PointsLabel.setText("000");
             mainTimerRunningLight.setStyle("-fx-fill: radial-gradient(center 50% 50%, radius 50%, darkred, black);");
             return;
-        }
-        ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(timerIds.get(currentTimerIndex));
+        }*/
+        ScoreTimer timer = (ScoreTimer) ruleEngine.getElement("periodTimer");
         if (timer != null) {
             long nanos = timer.getCurrentValue();
             long totalSeconds = nanos / 1_000_000_000L;
@@ -1012,7 +1012,7 @@ public class ScoreboardController implements Initializable {
         shotTimerHornRightLabel.setText(!shotTimerHorn.isBlank() ? "<" : " ");
         
         if (!settingMode || promptLine1.isEmpty()) {
-            line1LCD.setText(getTimerDisplayText());
+            line1LCD.setText(getTimerDisplayText(timer));
         }
 
         for (Map.Entry<String, JsonObject> entry : buttonConfigs.entrySet()) {
@@ -1075,7 +1075,8 @@ public class ScoreboardController implements Initializable {
         if (!settingMode) {
             line2LCD.setText("");
             promptLine1 = "";
-            line1LCD.setText(getTimerDisplayText());
+            ScoreTimer timer = (ScoreTimer) ruleEngine.getElement("periodTimer");
+            line1LCD.setText(getTimerDisplayText(timer));
             line3LCD.setText("");
             settingTimerId = "none";
             settingCounterId = "none";
@@ -1085,8 +1086,8 @@ public class ScoreboardController implements Initializable {
         }
     }
 
-    private String getTimerDisplayText() {
-        ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(timerIds.get(currentTimerIndex));
+    private String getTimerDisplayText(ScoreTimer timer) {
+        //ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(timerIds.get(currentTimerIndex));
         ScoreCounter team1Points = (ScoreCounter) ruleEngine.getElement("team1Points");
         ScoreCounter team2Points = (ScoreCounter) ruleEngine.getElement("team2Points");
         ScoreCounter periodCount = (ScoreCounter) ruleEngine.getElement("periodCount");
