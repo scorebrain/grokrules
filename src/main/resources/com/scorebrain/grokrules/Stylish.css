@@ -281,6 +281,11 @@
     -fx-padding: 6; /* Adjust padding for better fit */
 }
 
+#textScoreboard {
+    -fx-font: 18 "Courier New";
+    -fx-fill: #009933;
+}
+
 .scoreboard-text {
     -fx-font-family: "Courier New";
     -fx-font-size: 18px;

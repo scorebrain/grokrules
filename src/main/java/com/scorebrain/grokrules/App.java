@@ -474,6 +474,14 @@ class ScoreTimer implements ScoreElement {
             this.expiredNotified = false;
             }
     }
+    
+    public boolean getVisibility() {
+        return this.visibility;
+    }
+    
+    public void setVisibility(boolean value) {
+        this.visibility = value;
+    }
 }
 
 // ScoreIndicator class
