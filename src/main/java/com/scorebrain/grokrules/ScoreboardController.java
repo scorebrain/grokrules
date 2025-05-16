@@ -23,7 +23,8 @@ import javafx.scene.text.Text;
 
 public class ScoreboardController implements Initializable {
 
-    private RuleEngine ruleEngine = new RuleEngine("grokruleset.json");
+    //private RuleEngine ruleEngine = new RuleEngine("grokruleset.json");
+    private RuleEngine ruleEngine = new RuleEngine("BasketballRules00.json");
     //private List<String> timerIds;
     // private int currentTimerIndex = 0;
     private StringBuilder inputBuffer = new StringBuilder();
@@ -48,7 +49,7 @@ public class ScoreboardController implements Initializable {
     private Map<String, Timeline> indicatorTimelines = new HashMap<>();
     private Parent root;
     private boolean isInitialPrompt = false;
-    private String promptLine1 = "";
+    private String promptLine1 = "none";
     private StringBuilder[] textScoreboardLineStrings;
     private Text[] textScoreboardLineText;
 
@@ -104,10 +105,10 @@ public class ScoreboardController implements Initializable {
     }
 
     public void configureButtons() {
-        JsonObject uiConfig = ruleEngine.getUiConfig();
-        if (uiConfig != null) {
-            if (uiConfig.has("buttons")) {
-                JsonArray buttons = uiConfig.getAsJsonArray("buttons");
+        JsonObject controllerConfig = ruleEngine.getControllerConfig();
+        if (controllerConfig != null) {
+            if (controllerConfig.has("buttons")) {
+                JsonArray buttons = controllerConfig.getAsJsonArray("buttons");
                 for (JsonElement btn : buttons) {
                     JsonObject btnConfig = btn.getAsJsonObject();
                     String fxId = btnConfig.get("fxId").getAsString();
@@ -292,7 +293,7 @@ public class ScoreboardController implements Initializable {
         } else {
             for (JsonElement targetElem : targets) {
                 String target = targetElem.getAsString();
-                ScoreElement element = target != null ? ruleEngine.getElement(target) : null;
+                ScoreElement element = target != null ? ruleEngine.getGameElement(target) : null;
                 if (element instanceof ScoreTimer timer) {
                     if ("start".equals(action) && !timer.isRunning()) {
                         timer.startstop();
@@ -383,7 +384,7 @@ public class ScoreboardController implements Initializable {
                         int currentStateIndex = toggleStates.get(fxId);
                         JsonObject state = states.get(currentStateIndex).getAsJsonObject();
                         for (String stateTarget : state.keySet()) {
-                            ScoreIndicator indicatorToToggle = (ScoreIndicator) ruleEngine.getElement(stateTarget);
+                            ScoreIndicator indicatorToToggle = (ScoreIndicator) ruleEngine.getGameElement(stateTarget);
                             if (indicatorToToggle != null) {
                                 indicatorToToggle.setCurrentValue(state.get(stateTarget).getAsBoolean());
                             }
@@ -452,6 +453,19 @@ public class ScoreboardController implements Initializable {
                 String displayInput = input.substring(0, 2) + "." + input.substring(2, 3);
                 line2LCD.setText(settingPromptLine2.substring(0, bracketStart + 1) + displayInput + ">");
                 settingCursorMax = 3;
+            } else if ("SS".equals(format)) {
+                if (inputBuffer.length() < 2) {
+                    inputBuffer.append(number);
+                } else {
+                    inputBuffer.deleteCharAt(0).append(number);
+                }
+                String input = inputBuffer.toString();
+                while (input.length() < 2) {
+                    input = "0" + input;
+                }
+                //String displayInput = input.substring(0, 2) + "." + input.substring(2, 3);
+                line2LCD.setText(settingPromptLine2.substring(0, bracketStart + 1) + input + ">");
+                settingCursorMax = 2;
             }
         } else if (!"none".equals(settingCounterId) || (!"none".equals(settingTimerId) && !"none".equals(settingAttribute)) || (!"none".equals(settingIndicatorId) && !"none".equals(settingAttribute))) {
             int digitCount = format.replaceAll("[^N]", "").length();
@@ -464,7 +478,7 @@ public class ScoreboardController implements Initializable {
             } else {
                 boolean zeroCluster = false;
                 if (!"none".equals(settingCounterId)) {
-                    ScoreCounter counter = (ScoreCounter) ruleEngine.getElement(settingCounterId);
+                    ScoreCounter counter = (ScoreCounter) ruleEngine.getGameElement(settingCounterId);
                     zeroCluster = counter.hasLeadingZeroTricks();
                 }
                 String input = inputBuffer.toString();
@@ -496,7 +510,7 @@ public class ScoreboardController implements Initializable {
         int bracketEnd = settingPromptLine2.indexOf('>');
         String format = settingPromptLine2.substring(bracketStart + 1, bracketEnd);
         if (!"none".equals(settingTimerId)) {
-            ScoreTimer timer = (ScoreTimer) ruleEngine.getElement(settingTimerId);
+            ScoreTimer timer = (ScoreTimer) ruleEngine.getGameElement(settingTimerId);
             timer.setIsBlank(false);
             if ("none".equals(settingAttribute)) {
                 //long nanos = parseInput(format, inputBuffer.toString().trim());
@@ -526,6 +540,8 @@ public class ScoreboardController implements Initializable {
                         millis = Integer.parseInt(inputBuffer.substring(2,3).toString()) * 100;
                         seconds = Integer.parseInt(inputBuffer.substring(0,2).toString().trim());
                     }
+                } else if ("SS".equals(format)) {
+                    seconds = Integer.parseInt(inputBuffer.toString().trim());
                 }
                 System.out.println("Minutes: " + minutes + "  Seconds: " + seconds + "  Millis: " + millis);
                 timer.setHoursMinutesSecondsMillis(hours, minutes, seconds, millis);
@@ -545,7 +561,7 @@ public class ScoreboardController implements Initializable {
             }
             settingTimerId = "none";
         } else if (!"none".equals(settingCounterId)) {
-            ScoreCounter counter = (ScoreCounter) ruleEngine.getElement(settingCounterId);
+            ScoreCounter counter = (ScoreCounter) ruleEngine.getGameElement(settingCounterId);
             String input = inputBuffer.toString().trim();
             if (!"".equals(input)) {
                 int newValue = Integer.parseInt(input);
@@ -564,7 +580,7 @@ public class ScoreboardController implements Initializable {
             }
             settingCounterId = "none";
         } else if (!"none".equals(settingIndicatorId)) {
-            ScoreIndicator indicator = (ScoreIndicator) ruleEngine.getElement(settingIndicatorId);
+            ScoreIndicator indicator = (ScoreIndicator) ruleEngine.getGameElement(settingIndicatorId);
             indicator.setIsBlank(false);
             if ("none".equals(settingAttribute)) {
                 boolean newValue = inputBuffer.toString().trim().equals("1");
@@ -635,11 +651,13 @@ public class ScoreboardController implements Initializable {
                 display.append(String.format("%02d:%02d", minutes, seconds));
             } else if (format.equals("SS.X")) {
                 display.append(String.format("%02d.%d", seconds, tenths));
+            } else if (format.equals("SS")) {
+                display.append(String.format("%02d", seconds));
             }
             display.append(">");
             line2LCD.setText(display.toString());
         }
-        if (promptLine1 != null && !"".equals(promptLine1)) {
+        if (!"none".equals(promptLine1)) {
             line1LCD.setText(promptLine1);
         }
     }
@@ -658,7 +676,7 @@ public class ScoreboardController implements Initializable {
             display.append(">");
             line2LCD.setText(display.toString());
         }
-        if (promptLine1 != null && !"".equals(promptLine1)) {
+        if (!"none".equals(promptLine1)) {
             line1LCD.setText(promptLine1);
         }
     }
@@ -671,7 +689,7 @@ public class ScoreboardController implements Initializable {
         settingPromptLine2 = "none";
         isInitialPrompt = false;
         inputBuffer.setLength(0);
-        promptLine1 = "";
+        promptLine1 = "none";
         resetUI();
     }
 /*
@@ -695,125 +713,235 @@ public class ScoreboardController implements Initializable {
     }
 */
     private void updateUI() {
-        ScoreTimer timer = (ScoreTimer) ruleEngine.getElement("periodTimer");
-        if (timer != null) {
-            long nanos = timer.getCurrentValue();
-            long totalSeconds = nanos / 1_000_000_000L;
-            long tenths = (nanos % 1_000_000_000L) / 100_000_000L;
-            String timerText;
-            if (timer.getVisibility()) {
-                if (totalSeconds >= 60 || !timer.getAllowShift()) {
-                    long minutes = totalSeconds / 60;
-                    long seconds = totalSeconds % 60;
-                    timerText = String.format("%2d:%02d", minutes, seconds);
-                    if (minutes < 10) timerText = " " + timerText.substring(1);
-                } else {
-                    long seconds = totalSeconds;
-                    timerText = String.format("%2d.%d ", seconds, tenths);
-                    if (seconds < 10) timerText = " " + timerText.substring(1);
-                }
-            } else {
-                timerText = "     ";
-            }
-            textScoreboardLineStrings[2].replace(32, 37, timerText);
-
-            mainTimerRunningLight.setStyle(timer.isRunning() ?
-                "-fx-fill: radial-gradient(center 50% 50%, radius 50%, greenyellow, forestgreen);" :
-                "-fx-fill: radial-gradient(center 50% 50%, radius 50%, darkred, black);");
-            timer.checkThresholds();
-            double currentSeconds = timer.getCurrentValue() / 1_000_000_000.0;
-            boolean shouldFlash = timer.isRunning() && currentSeconds < timer.getFlashZoneThreshold() && timer.getFlashZoneThreshold() >= 0;
-
-            if (shouldFlash && !isFlashing) {
-                startFlashAnimation(timer);
-                isFlashing = true;
-            } else if (!shouldFlash && isFlashing) {
-                stopFlashAnimation(timer);
-                isFlashing = false;
-            }
+        ScoreTimer linkedTimer;
+        ScoreCounter linkedCounter;
+        ScoreIndicator linkedIndicator;
+        Boolean tempIndicator;
+        JsonArray gameLinks;
+        String linkId;
+        StringBuilder lcdLine1 = new StringBuilder("                ");
+        StringBuilder lcdLine2 = new StringBuilder("                ");
+        
+        ScoreTimer mainTimer = (ScoreTimer) ruleEngine.getDisplayElement("mainTimer");
+        gameLinks = mainTimer.getGameLinks();
+        linkId = gameLinks.get(0).getAsString();
+        linkedTimer = (ScoreTimer) ruleEngine.getGameElement(linkId);
+        linkedTimer.checkThresholds();
+        mainTimerRunningLight.setStyle(linkedTimer.isRunning() ?
+            "-fx-fill: radial-gradient(center 50% 50%, radius 50%, greenyellow, forestgreen);" :
+            "-fx-fill: radial-gradient(center 50% 50%, radius 50%, darkred, black);");
+        mainTimer.synchronize(linkedTimer);
+        
+        String timerText;
+        if (mainTimer.getVisibility()) {
+            timerText = mainTimer.getDisplayValue();
         } else {
-            textScoreboardLineStrings[2].replace(32, 37, "00:00");
-            mainTimerRunningLight.setStyle("-fx-fill: radial-gradient(center 50% 50%, radius 50%, darkred, black);");
+            timerText = "     ";
+        }
+        lcdLine1.replace(4, 5, mainTimer != null ? mainTimer.getIsUpCounting() ? "U" : "D" : "D");
+        StringBuilder lcdTimer = new StringBuilder(mainTimer.getDisplayValue());
+        if (lcdTimer.charAt(0) == ' ') {
+            lcdTimer.setCharAt(0, '0');
+        }
+        lcdLine1.replace(5, 10, mainTimer != null ? lcdTimer.toString() : "MM:SS");
+        textScoreboardLineStrings[mainTimer.getTextScoreboardLine()].replace(mainTimer.getTextScoreboardStartPos(), mainTimer.getTextScoreboardEndPos(), timerText);
+        mainTimer.checkThresholds();
+        double currentSeconds = mainTimer.getCurrentValue() / 1_000_000_000.0;
+        boolean shouldFlash = mainTimer.isRunning() && currentSeconds < mainTimer.getFlashZoneThreshold() && mainTimer.getFlashZoneThreshold() >= 0;
+        if (shouldFlash && !isFlashing) {
+            startFlashAnimation(mainTimer);
+            isFlashing = true;
+        } else if (!shouldFlash && isFlashing) {
+            stopFlashAnimation(mainTimer);
+            isFlashing = false;
         }
         
-        ScoreIndicator periodTimer_Horn = (ScoreIndicator) ruleEngine.getElement("periodTimer_Horn");
-        if (periodTimer_Horn.getCurrentValue()) {
-            startIndicatorAnimation(periodTimer_Horn);
+        ScoreIndicator mainHornLeft = (ScoreIndicator) ruleEngine.getDisplayElement("mainLeft_Horn");
+        gameLinks = mainHornLeft.getGameLinks();
+        tempIndicator = false;
+        for (int i = 0; i < gameLinks.size(); i++) {
+                linkId = gameLinks.get(i).getAsString();
+                linkedIndicator = (ScoreIndicator) ruleEngine.getGameElement(linkId);
+                if (linkedIndicator.getCurrentValue() && !linkedIndicator.isBlank()) {
+                    tempIndicator = true;
+                    startIndicatorAnimation(linkedIndicator);
+                }
         }
-        ScoreIndicator manual_Horn = (ScoreIndicator) ruleEngine.getElement("manual_Horn");
-        if (manual_Horn.getCurrentValue()) {
-            startIndicatorAnimation(manual_Horn);
-        }
-        
-        ScoreIndicator mainHornLeft = (ScoreIndicator) ruleEngine.getElement("mainLeft_Horn");
-        if (manual_Horn.getCurrentValue()&& !mainHornLeft.getCurrentValue()) {
+        if (tempIndicator && !mainHornLeft.getCurrentValue()) {
             mainHornLeft.setCurrentValue(true);
-        }
-        if (mainHornLeft.getCurrentValue()) {
             startIndicatorAnimation(mainHornLeft);
         }
-        textScoreboardLineStrings[2].replace(31, 32, mainHornLeft.isBlank() ? " " : ">");
-        ScoreIndicator mainHornRight = (ScoreIndicator) ruleEngine.getElement("mainRight_Horn");
-        if (manual_Horn.getCurrentValue()&& !mainHornRight.getCurrentValue()) {
-            mainHornRight.setCurrentValue(true);
+        textScoreboardLineStrings[2].replace(31, 32, mainHornLeft.getCurrentValue() && !mainHornLeft.isBlank() ? ">" : " ");
+        
+        ScoreIndicator mainHornRight = (ScoreIndicator) ruleEngine.getDisplayElement("mainRight_Horn");
+        gameLinks = mainHornRight.getGameLinks();
+        tempIndicator = false;
+        for (int i = 0; i < gameLinks.size(); i++) {
+                linkId = gameLinks.get(i).getAsString();
+                linkedIndicator = (ScoreIndicator) ruleEngine.getGameElement(linkId);
+                if (linkedIndicator.getCurrentValue() && !linkedIndicator.isBlank()) {
+                    tempIndicator = true;
+                    startIndicatorAnimation(linkedIndicator);
+                }
         }
-        if (mainHornRight.getCurrentValue()) {
+        if (tempIndicator && !mainHornRight.getCurrentValue()) {
+            mainHornRight.setCurrentValue(true);
             startIndicatorAnimation(mainHornRight);
         }
-        textScoreboardLineStrings[2].replace(37, 38, mainHornRight.isBlank() ? " " : "<");
+        textScoreboardLineStrings[2].replace(37, 38, mainHornRight.getCurrentValue() && !mainHornRight.isBlank() ? "<" : " ");
 
-        ScoreCounter team1Points = (ScoreCounter) ruleEngine.getElement("team1Points");
-        if (team1Points != null) {
-            textScoreboardLineStrings[3].replace(19, 23, String.format("%3d", team1Points.getCurrentValue()));
-        } else {
-            textScoreboardLineStrings[3].replace(19, 23, "000");
+        ScoreCounter team1Points = (ScoreCounter) ruleEngine.getDisplayElement("team1Points");
+        gameLinks = team1Points.getGameLinks();
+        linkId = gameLinks.get(0).getAsString();
+        linkedCounter = (ScoreCounter) ruleEngine.getGameElement(linkId);
+        textScoreboardLineStrings[3].replace(19, 22, linkedCounter != null ? String.format("%3d", linkedCounter.getCurrentValue()) : "###");
+        lcdLine1.replace(0, 3, linkedCounter != null ? String.format("%03d", linkedCounter.getCurrentValue()) : "###");
+
+        ScoreCounter team2Points = (ScoreCounter) ruleEngine.getDisplayElement("team2Points");
+        gameLinks = team2Points.getGameLinks();
+        linkId = gameLinks.get(0).getAsString();
+        linkedCounter = (ScoreCounter) ruleEngine.getGameElement(linkId);
+        textScoreboardLineStrings[3].replace(47, 50, linkedCounter != null ? String.format("%3d", linkedCounter.getCurrentValue()) : "###");
+        lcdLine1.replace(13, 16, linkedCounter != null ? String.format("%03d", linkedCounter.getCurrentValue()) : "###");
+        
+        ScoreIndicator team1Poss = (ScoreIndicator) ruleEngine.getDisplayElement("team1Possession");
+        gameLinks = team1Poss.getGameLinks();
+        tempIndicator = false;
+        for (int i = 0; i < gameLinks.size(); i++) {
+                linkId = gameLinks.get(i).getAsString();
+                linkedIndicator = (ScoreIndicator) ruleEngine.getGameElement(linkId);
+                if (linkedIndicator.getCurrentValue() && !linkedIndicator.isBlank()) {
+                    tempIndicator = true;
+                    //startIndicatorAnimation(linkedIndicator);
+                }
         }
-
-        ScoreCounter team2Points = (ScoreCounter) ruleEngine.getElement("team2Points");
-        if (team2Points != null) {
-            textScoreboardLineStrings[3].replace(47, 51, String.format("%3d", team2Points.getCurrentValue()));
+        if (tempIndicator && !team1Poss.getCurrentValue()) {
+            team1Poss.setCurrentValue(true);
+            //startIndicatorAnimation(team1Poss);
         } else {
-            textScoreboardLineStrings[3].replace(47, 51, "000");
+            team1Poss.setCurrentValue(tempIndicator);
         }
-
-        ScoreCounter periodCount = (ScoreCounter) ruleEngine.getElement("periodCount");
-        ScoreIndicator team1Poss = (ScoreIndicator) ruleEngine.getElement("team1Possession");
-        ScoreIndicator team2Poss = (ScoreIndicator) ruleEngine.getElement("team2Possession");
-        ScoreIndicator team1Bonus1 = (ScoreIndicator) ruleEngine.getElement("team1Bonus1");
-        ScoreIndicator team1Bonus2 = (ScoreIndicator) ruleEngine.getElement("team1Bonus2");
-        ScoreIndicator team2Bonus1 = (ScoreIndicator) ruleEngine.getElement("team2Bonus1");
-        ScoreIndicator team2Bonus2 = (ScoreIndicator) ruleEngine.getElement("team2Bonus2");
         textScoreboardLineStrings[4].replace(18, 19, team1Poss != null && team1Poss.getCurrentValue() ? "<" : " ");
+        lcdLine2.setCharAt(0, team1Poss != null && team1Poss.getCurrentValue() ? '<' : ' ');
+        
+        ScoreIndicator team1Bonus2 = (ScoreIndicator) ruleEngine.getDisplayElement("team1Bonus2");
+        gameLinks = team1Bonus2.getGameLinks();
+        // We have to know that this Indicator is linked to a Counter (not like a Horn linked to manual + auto Horns)
+        linkId = gameLinks.get(0).getAsString();
+        linkedCounter = (ScoreCounter) ruleEngine.getGameElement(linkId);
+        tempIndicator = linkedCounter.getCurrentValue() > 1;
+        if (tempIndicator && !team1Bonus2.getCurrentValue()) {
+            team1Bonus2.setCurrentValue(true);
+            //startIndicatorAnimation(team1Bonus2);
+        } else {
+            team1Bonus2.setCurrentValue(tempIndicator);
+        }
         textScoreboardLineStrings[4].replace(20, 21, team1Bonus2 != null && team1Bonus2.getCurrentValue() ? "B" : " ");
+        
+        
+        ScoreIndicator team1Bonus1 = (ScoreIndicator) ruleEngine.getDisplayElement("team1Bonus1");
+        gameLinks = team1Bonus1.getGameLinks();
+        // We have to know that this Indicator is linked to a Counter (not like a Horn linked to manual + auto Horns)
+        linkId = gameLinks.get(0).getAsString();
+        linkedCounter = (ScoreCounter) ruleEngine.getGameElement(linkId);
+        tempIndicator = linkedCounter.getCurrentValue() > 0;
+        if (tempIndicator && !team1Bonus1.getCurrentValue()) {
+            team1Bonus1.setCurrentValue(true);
+            //startIndicatorAnimation(team1Bonus1);
+        } else {
+            team1Bonus1.setCurrentValue(tempIndicator);
+        }
         textScoreboardLineStrings[4].replace(22, 23, team1Bonus1 != null && team1Bonus1.getCurrentValue() ? "B" : " ");
-        if (periodCount != null) {
-            textScoreboardLineStrings[4].replace(37, 38, String.format("%1d", periodCount.getCurrentValue()));
+        lcdLine2.setCharAt(1, team1Bonus1 != null && team1Bonus1.getCurrentValue() ?
+                (team1Bonus2 != null && team1Bonus2.getCurrentValue() ? 'B' : 'b') : ' ');
+
+        ScoreCounter periodCount = (ScoreCounter) ruleEngine.getDisplayElement("periodCount");
+        gameLinks = periodCount.getGameLinks();
+        linkId = gameLinks.get(0).getAsString();
+        linkedCounter = (ScoreCounter) ruleEngine.getGameElement(linkId);
+        if (linkedCounter != null) {
+            textScoreboardLineStrings[4].replace(37, 38, String.format("%1d", linkedCounter.getCurrentValue()));
         } else {
             textScoreboardLineStrings[4].replace(37, 38, "#");
         }
+        lcdLine1.replace(11, 12, linkedCounter != null ? String.format("%1d", linkedCounter.getCurrentValue()) : "#");
+        
+        ScoreIndicator team2Bonus1 = (ScoreIndicator) ruleEngine.getDisplayElement("team2Bonus1");
+        gameLinks = team2Bonus1.getGameLinks();
+        // We have to know that this Indicator is linked to a Counter (not like a Horn linked to manual + auto Horns)
+        linkId = gameLinks.get(0).getAsString();
+        linkedCounter = (ScoreCounter) ruleEngine.getGameElement(linkId);
+        tempIndicator = linkedCounter.getCurrentValue() > 0;
+        if (tempIndicator && !team2Bonus1.getCurrentValue()) {
+            team2Bonus1.setCurrentValue(true);
+            // startIndicatorAnimation(team2Bonus1);
+        } else {
+            team2Bonus1.setCurrentValue(tempIndicator);
+        }
         textScoreboardLineStrings[4].replace(46, 47, team2Bonus1 != null && team2Bonus1.getCurrentValue() ? "B" : " ");
+        
+        ScoreIndicator team2Bonus2 = (ScoreIndicator) ruleEngine.getDisplayElement("team2Bonus2");
+        gameLinks = team2Bonus2.getGameLinks();
+        // We have to know that this Indicator is linked to a Counter (not like a Horn linked to manual + auto Horns)
+        linkId = gameLinks.get(0).getAsString();
+        linkedCounter = (ScoreCounter) ruleEngine.getGameElement(linkId);
+        tempIndicator = linkedCounter.getCurrentValue() > 1;
+        if (tempIndicator && !team2Bonus2.getCurrentValue()) {
+            team2Bonus2.setCurrentValue(true);
+            //startIndicatorAnimation(team2Bonus2);
+        } else {
+            team2Bonus2.setCurrentValue(tempIndicator);
+        }
         textScoreboardLineStrings[4].replace(48, 49, team2Bonus2 != null && team2Bonus2.getCurrentValue() ? "B" : " ");
+        lcdLine2.setCharAt(14, team2Bonus1 != null && team2Bonus1.getCurrentValue() ?
+                (team2Bonus2 != null && team2Bonus2.getCurrentValue() ? 'B' : 'b') : ' ');
+        
+        ScoreIndicator team2Poss = (ScoreIndicator) ruleEngine.getDisplayElement("team2Possession");
+        gameLinks = team2Poss.getGameLinks();
+        tempIndicator = false;
+        for (int i = 0; i < gameLinks.size(); i++) {
+                linkId = gameLinks.get(i).getAsString();
+                linkedIndicator = (ScoreIndicator) ruleEngine.getGameElement(linkId);
+                if (linkedIndicator.getCurrentValue() && !linkedIndicator.isBlank()) {
+                    tempIndicator = true;
+                    //startIndicatorAnimation(linkedIndicator);
+                }
+        }
+        if (tempIndicator && !team2Poss.getCurrentValue()) {
+            team2Poss.setCurrentValue(true);
+            //startIndicatorAnimation(team2Poss);
+        } else {
+            team2Poss.setCurrentValue(tempIndicator);
+        }
         textScoreboardLineStrings[4].replace(50, 51, team2Poss != null && team2Poss.getCurrentValue() ? ">" : " ");
+        lcdLine2.setCharAt(15, team2Poss != null && team2Poss.getCurrentValue() ? '>' : ' ');
         
-        ScoreCounter playerNumber = (ScoreCounter) ruleEngine.getElement("playerNumber");
-        ScoreCounter playerFoul = (ScoreCounter) ruleEngine.getElement("playerFoul");
-        ScoreCounter team1Fouls = (ScoreCounter) ruleEngine.getElement("team1Fouls");
-        ScoreCounter team2Fouls = (ScoreCounter) ruleEngine.getElement("team2Fouls");
-        ScoreCounter team1TimeOuts = (ScoreCounter) ruleEngine.getElement("team1TimeOuts");
-        ScoreCounter team2TimeOuts = (ScoreCounter) ruleEngine.getElement("team2TimeOuts");
-
-        textScoreboardLineStrings[7].replace(16, 18, team1Fouls != null ? String.format("%2d", team1Fouls.getCurrentValue()) : "##");
-        textScoreboardLineStrings[7].replace(22, 23, team1TimeOuts != null ? String.format("%1d", team1TimeOuts.getCurrentValue()) : "#");
+        ScoreCounter team1Fouls = (ScoreCounter) ruleEngine.getDisplayElement("team1Fouls");
+        gameLinks = team1Fouls.getGameLinks();
+        linkId = gameLinks.get(0).getAsString();
+        linkedCounter = (ScoreCounter) ruleEngine.getGameElement(linkId);
+        textScoreboardLineStrings[7].replace(16, 18, linkedCounter != null ? String.format("%2d", linkedCounter.getCurrentValue()) : "##");
+        lcdLine2.replace(3, 5, linkedCounter != null ? String.format("%02d", linkedCounter.getCurrentValue()) : "##");
         
-        if (playerNumber != null) {
-            if (playerNumber.isBlank()) {
+        ScoreCounter team1TimeOuts = (ScoreCounter) ruleEngine.getDisplayElement("team1TimeOuts");
+        gameLinks = team1TimeOuts.getGameLinks();
+        linkId = gameLinks.get(0).getAsString();
+        linkedCounter = (ScoreCounter) ruleEngine.getGameElement(linkId);
+        textScoreboardLineStrings[7].replace(22, 23, linkedCounter != null ? String.format("%1d", linkedCounter.getCurrentValue()) : "#");
+        
+        ScoreCounter playerNumber = (ScoreCounter) ruleEngine.getDisplayElement("playerNumber");
+        gameLinks = playerNumber.getGameLinks();
+        linkId = gameLinks.get(0).getAsString();
+        linkedCounter = (ScoreCounter) ruleEngine.getGameElement(linkId);
+        if (linkedCounter != null) {
+            if (linkedCounter.isBlank()) {
                 textScoreboardLineStrings[7].replace(31, 33, "  ");
             } else {
                 String numberStr;
-                int value = playerNumber.getCurrentValue();
+                int value = linkedCounter.getCurrentValue();
                 if (value >= 10) {
                     numberStr = String.format("%2d", value);
-                } else if (playerNumber.showLeadingZero()) {
+                } else if (linkedCounter.showLeadingZero()) {
                     numberStr = String.format("0%d", value);
                     } else {
                         numberStr = String.format(" %d", value);
@@ -821,85 +949,135 @@ public class ScoreboardController implements Initializable {
                 textScoreboardLineStrings[7].replace(31, 33, numberStr);
             }
         }
-        if (playerFoul != null) {
-            if (playerFoul.isBlank()) {
+        lcdLine2.replace(6, 8, linkedCounter != null ? String.format("%02d", linkedCounter.getCurrentValue()) : "##");
+        
+        
+        ScoreCounter playerFoul = (ScoreCounter) ruleEngine.getDisplayElement("playerFoul");
+        gameLinks = playerFoul.getGameLinks();
+        linkId = gameLinks.get(0).getAsString();
+        linkedCounter = (ScoreCounter) ruleEngine.getGameElement(linkId);
+        if (linkedCounter != null) {
+            if (linkedCounter.isBlank()) {
                 textScoreboardLineStrings[7].replace(38, 39, " ");
             } else {
-                textScoreboardLineStrings[7].replace(38, 39, String.format("%1d", playerFoul.getCurrentValue()));
+                textScoreboardLineStrings[7].replace(38, 39, String.format("%1d", linkedCounter.getCurrentValue()));
             }
         }
-        textScoreboardLineStrings[7].replace(46, 47, team2TimeOuts != null ? String.format("%1d", team2TimeOuts.getCurrentValue()) : "#");
-        textScoreboardLineStrings[7].replace(50, 52, team2Fouls != null ? String.format("%2d", team2Fouls.getCurrentValue()) : "##");
-
-        if (!settingMode) {
-            StringBuilder lcdLine2 = new StringBuilder("                ");
-            lcdLine2.setCharAt(0, team1Poss != null && team1Poss.getCurrentValue() ? '<' : ' ');
-            lcdLine2.setCharAt(1, team1Bonus1 != null && team1Bonus1.getCurrentValue() ?
-                (team1Bonus2 != null && team1Bonus2.getCurrentValue() ? 'B' : 'b') : ' ');
-            if (team1Fouls != null) {
-                lcdLine2.replace(3, 5, String.format("%02d", team1Fouls.getCurrentValue()));
-            }
-            if (playerNumber != null) {
-                lcdLine2.replace(6, 8, playerNumber.isBlank() ? "00" : String.format("%02d", playerNumber.getCurrentValue()));
-            }
-            lcdLine2.setCharAt(9, playerFoul != null && !playerFoul.isBlank() ? String.valueOf(playerFoul.getCurrentValue()).charAt(0) : '0');
-            if (team2Fouls != null) {
-                lcdLine2.replace(11, 13, String.format("%02d", team2Fouls.getCurrentValue()));
-            }
-            lcdLine2.setCharAt(14, team2Bonus1 != null && team2Bonus1.getCurrentValue() ?
-                (team2Bonus2 != null && team2Bonus2.getCurrentValue() ? 'B' : 'b') : ' ');
-            lcdLine2.setCharAt(15, team2Poss != null && team2Poss.getCurrentValue() ? '>' : ' ');
-            line2LCD.setText(lcdLine2.toString());
-        }
+        lcdLine2.setCharAt(9, linkedCounter != null ? String.valueOf(linkedCounter.getCurrentValue()).charAt(0) : '#');
         
-        ScoreTimer shotTimer = (ScoreTimer) ruleEngine.getElement("shotTimer");
-        String shotTimerSeconds;
-        if (shotTimer != null) {
-            shotTimerSeconds = String.format("%2d", shotTimer.getCurrentValue() / 1_000_000_000l);
-        } else {
-            shotTimerSeconds = "XX";
-        }
-        textScoreboardLineStrings[9].replace(39, 41, shotTimerSeconds);
+        ScoreCounter team2TimeOuts = (ScoreCounter) ruleEngine.getDisplayElement("team2TimeOuts");
+        gameLinks = team2TimeOuts.getGameLinks();
+        linkId = gameLinks.get(0).getAsString();
+        linkedCounter = (ScoreCounter) ruleEngine.getGameElement(linkId);
+        textScoreboardLineStrings[7].replace(46, 47, linkedCounter != null ? String.format("%1d", linkedCounter.getCurrentValue()) : "#");
+        
+        ScoreCounter team2Fouls = (ScoreCounter) ruleEngine.getDisplayElement("team2Fouls");
+        gameLinks = team2Fouls.getGameLinks();
+        linkId = gameLinks.get(0).getAsString();
+        linkedCounter = (ScoreCounter) ruleEngine.getGameElement(linkId);
+        textScoreboardLineStrings[7].replace(50, 52, linkedCounter != null ? String.format("%2d", linkedCounter.getCurrentValue()) : "##");
+        lcdLine2.replace(11, 13, linkedCounter != null ? String.format("%02d", linkedCounter.getCurrentValue()) : "##");
 
-        ScoreIndicator visualHornLeft = (ScoreIndicator) ruleEngine.getElement("visualLeft_Horn");
-        if (manual_Horn.getCurrentValue()&& !visualHornLeft.getCurrentValue()) {
-            visualHornLeft.setCurrentValue(true);
+        ScoreTimer shotTimer = (ScoreTimer) ruleEngine.getDisplayElement("shotTimer");
+        gameLinks = shotTimer.getGameLinks();
+        linkId = gameLinks.get(0).getAsString();
+        linkedTimer = (ScoreTimer) ruleEngine.getGameElement(linkId);
+        textScoreboardLineStrings[9].replace(39, 41, linkedTimer != null? linkedTimer.getDisplayValue() : "##");
+
+        ScoreIndicator visualHornLeft = (ScoreIndicator) ruleEngine.getDisplayElement("visualLeft_Horn");
+        gameLinks = visualHornLeft.getGameLinks();
+        tempIndicator = false;
+        for (int i = 0; i < gameLinks.size(); i++) {
+                linkId = gameLinks.get(i).getAsString();
+                linkedIndicator = (ScoreIndicator) ruleEngine.getGameElement(linkId);
+                if (linkedIndicator.getCurrentValue() && !linkedIndicator.isBlank()) {
+                    tempIndicator = true;
+                    startIndicatorAnimation(linkedIndicator);
+                }
         }
-        if (visualHornLeft.getCurrentValue()) {
+        if (tempIndicator && !visualHornLeft.getCurrentValue()) {
+            visualHornLeft.setCurrentValue(true);
             startIndicatorAnimation(visualHornLeft);
         }
-        textScoreboardLineStrings[9].replace(17, 21, visualHornLeft.isBlank() ? "    " : ">VL<");
-        ScoreIndicator visualHornRight = (ScoreIndicator) ruleEngine.getElement("visualRight_Horn");
-        if (manual_Horn.getCurrentValue()&& !visualHornRight.getCurrentValue()) {
-            visualHornRight.setCurrentValue(true);
+        textScoreboardLineStrings[9].replace(17, 21, visualHornLeft.getCurrentValue() && !visualHornLeft.isBlank() ? ">VL<" : "    ");
+        
+        ScoreIndicator visualHornRight = (ScoreIndicator) ruleEngine.getDisplayElement("visualRight_Horn");
+        gameLinks = visualHornRight.getGameLinks();
+        tempIndicator = false;
+        for (int i = 0; i < gameLinks.size(); i++) {
+                linkId = gameLinks.get(i).getAsString();
+                linkedIndicator = (ScoreIndicator) ruleEngine.getGameElement(linkId);
+                if (linkedIndicator.getCurrentValue() && !linkedIndicator.isBlank()) {
+                    tempIndicator = true;
+                    startIndicatorAnimation(linkedIndicator);
+                }
         }
-        if (visualHornRight.getCurrentValue()) {
+        if (tempIndicator && !visualHornRight.getCurrentValue()) {
+            visualHornRight.setCurrentValue(true);
             startIndicatorAnimation(visualHornRight);
         }
-        textScoreboardLineStrings[9].replace(47, 51, visualHornRight.isBlank() ? "    " : ">VR<");
-        ScoreIndicator backboardLight = (ScoreIndicator) ruleEngine.getElement("backboardLight_Horn");
-        if (manual_Horn.getCurrentValue()&& !backboardLight.getCurrentValue()) {
-            backboardLight.setCurrentValue(true);
+        textScoreboardLineStrings[9].replace(47, 51, visualHornRight.getCurrentValue() && !visualHornRight.isBlank() ? ">VR<" : "    ");
+        
+        ScoreIndicator backboardLight = (ScoreIndicator) ruleEngine.getDisplayElement("backboardLight_Horn");
+        gameLinks = backboardLight.getGameLinks();
+        tempIndicator = false;
+        for (int i = 0; i < gameLinks.size(); i++) {
+                linkId = gameLinks.get(i).getAsString();
+                linkedIndicator = (ScoreIndicator) ruleEngine.getGameElement(linkId);
+                if (linkedIndicator.getCurrentValue() && !linkedIndicator.isBlank()) {
+                    tempIndicator = true;
+                    startIndicatorAnimation(linkedIndicator);
+                }
         }
-        if (backboardLight.getCurrentValue()) {
+        if (tempIndicator && !backboardLight.getCurrentValue()) {
+            backboardLight.setCurrentValue(true);
             startIndicatorAnimation(backboardLight);
         }
-        textScoreboardLineStrings[11].replace(21, 47, backboardLight.isBlank() ? "                          " : "[=== BACKBOARD LIGHTS ===]");
-        ScoreIndicator shotTimerHorn = (ScoreIndicator) ruleEngine.getElement("shotTimer_Horn");
-        if (shotTimerHorn.getCurrentValue()) {
-            startIndicatorAnimation(shotTimerHorn);
+        textScoreboardLineStrings[11].replace(21, 47, backboardLight.getCurrentValue() && !backboardLight.isBlank() ? "[=== BACKBOARD LIGHTS ===]" : "                          ");
+        
+        ScoreIndicator shotTimerLeftHorn = (ScoreIndicator) ruleEngine.getDisplayElement("shotTimerLeft_Horn");
+        gameLinks = shotTimerLeftHorn.getGameLinks();
+        tempIndicator = false;
+        for (int i = 0; i < gameLinks.size(); i++) {
+                linkId = gameLinks.get(i).getAsString();
+                linkedIndicator = (ScoreIndicator) ruleEngine.getGameElement(linkId);
+                if (linkedIndicator.getCurrentValue() && !linkedIndicator.isBlank()) {
+                    tempIndicator = true;
+                    startIndicatorAnimation(linkedIndicator);
+                }
         }
-        textScoreboardLineStrings[9].replace(38, 39, shotTimerHorn != null && shotTimerHorn.isBlank() ? " " : ">");
-        textScoreboardLineStrings[9].replace(41, 42, shotTimerHorn != null && shotTimerHorn.isBlank() ? " " : "<");
+        if (tempIndicator && !shotTimerLeftHorn.getCurrentValue()) {
+            shotTimerLeftHorn.setCurrentValue(true);
+            startIndicatorAnimation(shotTimerLeftHorn);
+        }
+        textScoreboardLineStrings[9].replace(38, 39, shotTimerLeftHorn.getCurrentValue() && !shotTimerLeftHorn.isBlank() ? ">" : " ");
+        ScoreIndicator shotTimerRightHorn = (ScoreIndicator) ruleEngine.getDisplayElement("shotTimerRight_Horn");
+        gameLinks = shotTimerRightHorn.getGameLinks();
+        tempIndicator = false;
+        for (int i = 0; i < gameLinks.size(); i++) {
+                linkId = gameLinks.get(i).getAsString();
+                linkedIndicator = (ScoreIndicator) ruleEngine.getGameElement(linkId);
+                if (linkedIndicator.getCurrentValue() && !linkedIndicator.isBlank()) {
+                    tempIndicator = true;
+                    startIndicatorAnimation(linkedIndicator);
+                }
+        }
+        if (tempIndicator && !shotTimerRightHorn.getCurrentValue()) {
+            shotTimerRightHorn.setCurrentValue(true);
+            startIndicatorAnimation(shotTimerRightHorn);
+        }
+        textScoreboardLineStrings[9].replace(41, 42, shotTimerRightHorn.getCurrentValue() && !shotTimerRightHorn.isBlank() ? "<" : " ");
         
         for (int i=1; i < 12; i++) {
             textScoreboardLineText[i].setText(textScoreboardLineStrings[i].toString());
         }
         
-        if (!settingMode || promptLine1.isEmpty()) {
-            line1LCD.setText(getTimerDisplayText(timer));
+        if (!settingMode) {
+            line2LCD.setText(lcdLine2.toString());
+            if ("none".equals(promptLine1)) {
+                line1LCD.setText(lcdLine1.toString());
+            }
         }
-
         for (Map.Entry<String, JsonObject> entry : buttonConfigs.entrySet()) {
             String fxId = entry.getKey();
             JsonObject config = entry.getValue();
@@ -909,7 +1087,7 @@ public class ScoreboardController implements Initializable {
                 JsonArray targets = config.has("mainTargets") ? config.getAsJsonArray("mainTargets") : null;
                 for (JsonElement targetElem : targets) {
                     String target = targetElem.getAsString();
-                    ScoreElement element = target != null ? ruleEngine.getElement(target) : null;
+                    ScoreElement element = target != null ? ruleEngine.getGameElement(target) : null;
                     boolean disable = evaluateCondition(condition, element);
                     button.setDisable(disable);
                 }
@@ -959,9 +1137,10 @@ public class ScoreboardController implements Initializable {
         updateUI();
         if (!settingMode) {
             line2LCD.setText("");
-            promptLine1 = "";
-            ScoreTimer timer = (ScoreTimer) ruleEngine.getElement("periodTimer");
-            line1LCD.setText(getTimerDisplayText(timer));
+            promptLine1 = "none";
+            //ScoreTimer timer = (ScoreTimer) ruleEngine.getElement("periodTimer");
+            //line1LCD.setText(getTimerDisplayText(timer));
+            line1LCD.setText("");
             line3LCD.setText("");
             settingTimerId = "none";
             settingCounterId = "none";
@@ -971,7 +1150,7 @@ public class ScoreboardController implements Initializable {
         }
     }
 
-    private String getTimerDisplayText(ScoreTimer timer) {
+/*    private String getTimerDisplayText(ScoreTimer timer) {
         ScoreCounter team1Points = (ScoreCounter) ruleEngine.getElement("team1Points");
         ScoreCounter team2Points = (ScoreCounter) ruleEngine.getElement("team2Points");
         ScoreCounter periodCount = (ScoreCounter) ruleEngine.getElement("periodCount");
@@ -999,7 +1178,7 @@ public class ScoreboardController implements Initializable {
         }
 
         return team1PointsText + " " + modeText + timerText + " " + periodCountText + " " + team2PointsText;
-    }
+    }*/
 
     private void startFlashAnimation(ScoreTimer timer) {
         String pattern = timer.getFlashZonePattern();

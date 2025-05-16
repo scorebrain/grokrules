@@ -1,20 +1,17 @@
 {
-  "game-elements": [
+  "Game-Elements": [
 	{
       "type": "ScoreTimer",
       "id": "periodTimer",
       "initialValue": 480000000000,
       "isUpCounting": false,
       "allowShift": true,
+	  "format": "MM:SS",
       "minValue": 0,
       "maxValue": 5940000000000,
       "canRollUp": false,
       "canRollDown": false,
-      "thresholds": [10],
-      "flashZoneThreshold": 10,
-      "flashZonePattern": "400:true,100:false",
-      "constrainWhen": "isUpCounting == true -> allowShift = false",
-	  "initialVisibility": true
+      "constrainWhen": "isUpCounting == true -> allowShift = false"
     },
 	{
       "type": "ScoreTimer",
@@ -22,11 +19,12 @@
       "initialValue": 35000000000,
       "isUpCounting": false,
       "allowShift": false,
+	  "format": "SS",
       "minValue": 0,
       "maxValue": 99000000000,
+	  "maxSeconds": 99,
       "canRollUp": false,
-      "canRollDown": false,
-	  "initialVisibility": true
+      "canRollDown": false
     },
 	{
       "type": "ScoreIndicator",
@@ -44,121 +42,10 @@
     },
 	{
       "type": "ScoreIndicator",
-      "id": "mainLeft_Horn",
-      "initialValue": false,
-      "observedTimerId": "periodTimer",
-      "triggerEvent": "expired",
-      "pattern": "700:true,300:false,300:true,300:false,300:true,300:false"
-    },
-	{
-      "type": "ScoreIndicator",
-      "id": "mainRight_Horn",
-      "initialValue": false,
-      "observedTimerId": "periodTimer",
-      "triggerEvent": "expired",
-      "pattern": "700:true,300:false,300:true,300:false,300:true,300:false"
-    },
-	{
-      "type": "ScoreIndicator",
-      "id": "visualRight_Horn",
-      "initialValue": false,
-      "observedTimerId": "periodTimer",
-      "triggerEvent": "expired",
-      "pattern": "4000:true"
-    },
-	{
-      "type": "ScoreIndicator",
-      "id": "visualLeft_Horn",
-      "initialValue": false,
-      "observedTimerId": "periodTimer",
-      "triggerEvent": "expired",
-      "pattern": "3500:true"
-    },
-	{
-      "type": "ScoreIndicator",
-      "id": "backboardLight_Horn",
-      "initialValue": false,
-      "observedTimerId": "periodTimer",
-      "triggerEvent": "expired",
-      "pattern": "4500:true"
-    },
-	{
-      "type": "ScoreIndicator",
       "id": "shotTimer_Horn",
       "initialValue": false,
       "observedTimerId": "shotTimer",
-      "triggerEvent": "expired",
-      "pattern": "200:true,200:false,200:true,200:false,200:true,200:false"
-    },
-	{
-      "type": "ScoreTimer",
-      "id": "timerOne",
-      "initialValue": 15000000000,
-      "isUpCounting": false,
-      "allowShift": true,
-      "minValue": 0,
-      "maxValue": 5940000000000,
-      "rolloverValue": 20000000000,
-      "canRollUp": true,
-      "canRollDown": false,
-      "thresholds": [10],
-      "flashZoneThreshold": 10,
-      "flashZonePattern": "500:true,500:false",
-      "constrainWhen": "isUpCounting == true -> allowShift = false"
-    },
-    {
-      "type": "ScoreIndicator",
-      "id": "timerOne_Horn",
-      "initialValue": false,
-      "observedTimerId": "timerOne",
-      "triggerEvent": "expired",
-      "pattern": "300:true,200:false,300:true,200:false"
-    },
-    {
-      "type": "ScoreTimer",
-      "id": "timerTwo",
-      "initialValue": 120000000000,
-      "isUpCounting": true,
-      "allowShift": true,
-      "minValue": 0,
-      "maxValue": 59999990000000,
-      "rolloverValue": 35999990000000,
-      "canRollUp": false,
-      "canRollDown": false,
-      "thresholds": [20],
-      "flashZoneThreshold": 25,
-      "flashZonePattern": "200:true,200:false"
-    },
-    {
-      "type": "ScoreIndicator",
-      "id": "timerTwo_Horn",
-      "initialValue": false,
-      "observedTimerId": "timerTwo",
-      "triggerEvent": "threshold:20",
-      "pattern": "300:true,200:false,300:true,200:false"
-    },
-    {
-      "type": "ScoreTimer",
-      "id": "timerThree",
-      "initialValue": 30000000000,
-      "isUpCounting": false,
-      "allowShift": true,
-      "minValue": 0,
-      "maxValue": 59999990000000,
-      "rolloverValue": 35999990000000,
-      "canRollUp": false,
-      "canRollDown": false,
-      "thresholds": [5],
-      "flashZoneThreshold": 30,
-      "flashZonePattern": "200:true,200:false,600:true,200:false"
-    },
-    {
-      "type": "ScoreIndicator",
-      "id": "timerThree_Horn",
-      "initialValue": false,
-      "observedTimerId": "timerThree",
-      "triggerEvent": "expired",
-      "pattern": "200:true,200:false,200:true,200:false,600:true"
+      "triggerEvent": "expired"
     },
 	{
       "type": "ScoreCounter",
@@ -201,25 +88,27 @@
       "id": "team2Possession",
       "initialValue": false
     },
-	{
-      "type": "ScoreIndicator",
-      "id": "team1Bonus1",
-      "initialValue": false
+    {
+      "type": "ScoreCounter",
+      "id": "team1BonusCount",
+      "initialValue": 0,
+      "minValue": 0,
+      "maxValue": 2,
+	  "rolloverValue": 2,
+	  "canRollUp": true,
+      "canRollDown": false,
+	  "initialVisibility": true
     },
     {
-      "type": "ScoreIndicator",
-      "id": "team1Bonus2",
-      "initialValue": false
-    },
-	{
-      "type": "ScoreIndicator",
-      "id": "team2Bonus1",
-      "initialValue": false
-    },
-    {
-      "type": "ScoreIndicator",
-      "id": "team2Bonus2",
-      "initialValue": false
+      "type": "ScoreCounter",
+      "id": "team2BonusCount",
+      "initialValue": 0,
+      "minValue": 0,
+      "maxValue": 2,
+	  "rolloverValue": 2,
+	  "canRollUp": true,
+      "canRollDown": false,
+	  "initialVisibility": true
     },
 	{
       "type": "ScoreCounter",
@@ -283,7 +172,7 @@
 	  "initialVisibility": true
     }
   ],
-  "uiConfig": {
+  "Controller-Config": {
     "buttons": [
 	  {"fxId": "buttonE4", "label": "CLEAR", "mainAction": "clear",
         "alt0": {
@@ -304,7 +193,7 @@
       {"fxId": "buttonB2", "label": "9", "mainAction": "number"},
       {"fxId": "buttonB8", "label": "SET CLOCK", "mainAction": "setCurrentValue", "mainTargets": ["periodTimer"], "mainPromptLine2": "SET CLK  <MM:SS>", "disableWhen": "mainTargets.isRunning == true"},
       {"fxId": "buttonB7", "label": "SET CLOCK .1 SEC", "mainAction": "setCurrentValue", "mainTargets": ["periodTimer"], "mainPromptLine2": "SET CLK   <SS.X>", "disableWhen": "mainTargets.isRunning == true || mainTargets.allowShift == false"},
-      {"fxId": "buttonB6", "label": "0.1 SEC ON / OFF", "mainAction": "setAttributeValue", "mainTargets": ["periodTimer"], "mainAttribute": "allowShift", mainPromptLine1": " 1/10TH SECOND  ", "mainPromptLine2": "1=YES  0=NO  <N>", "disableWhen": "mainTargets.isRunning == true || mainTargets.isUpCounting == true"},
+      {"fxId": "buttonB6", "label": "0.1 SEC ON / OFF", "mainAction": "setAttributeValue", "mainTargets": ["periodTimer"], "mainAttribute": "allowShift", "mainPromptLine1": " 1/10TH SECOND  ", "mainPromptLine2": "1=YES  0=NO  <N>", "disableWhen": "mainTargets.isRunning == true || mainTargets.isUpCounting == true"},
       {"fxId": "buttonB5", "label": "CLOCK UP / DOWN", "mainAction": "setAttributeValue", "mainTargets": ["periodTimer"], "mainAttribute": "isUpCounting", "mainPromptLine1": "COUNT UP OR DOWN", "mainPromptLine2": "1=UP 0=DOWN  <N>", "disableWhen": "mainTargets.isRunning == true"},
       {"fxId": "buttonD8", "label": "SET GUEST SCORE", "mainAction": "setCurrentValue", "mainTargets": ["team1Points"], "mainPromptLine2": "SET SCORE  <NNN>"},
       {"fxId": "buttonD7", "label": "SET HOME SCORE", "mainAction": "setCurrentValue", "mainTargets": ["team2Points"], "mainPromptLine2": "SET SCORE  <NNN>"},
@@ -347,24 +236,14 @@
 	  {
         "fxId": "buttonE6",
         "label": "GUEST BONUS",
-        "mainAction": "toggle",
-        "mainTargets": ["team1Bonus1"],
-        "mainStates": [
-          {"team1Bonus1": true, "team1Bonus2": false},
-          {"team1Bonus1": true, "team1Bonus2": true},
-		  {"team1Bonus1": false, "team1Bonus2": false}
-        ]
+        "mainAction": "increment",
+        "mainTargets": ["team1BonusCount"]
       },
 	  {
         "fxId": "buttonE5",
         "label": "HOME BONUS",
-        "mainAction": "toggle",
-        "mainTargets": ["team2Bonus1"],
-        "mainStates": [
-          {"team2Bonus1": true, "team2Bonus2": false},
-          {"team2Bonus1": true, "team2Bonus2": true},
-		  {"team2Bonus1": false, "team2Bonus2": false}
-        ]
+        "mainAction": "increment",
+        "mainTargets": ["team2BonusCount"]
       },
 	  {
         "fxId": "buttonE8",
@@ -398,5 +277,273 @@
 		"mainPromptLine2": "CURRENT TIME<SS>"
       }
     ]
-  }
+  },
+  "Display-Config": [
+	{
+      "type": "ScoreTimer",
+      "id": "mainTimer",
+      "initialVisibility": true,
+	  "gameLinks": ["periodTimer"],
+	  "format": "MM:SS",
+	  "maxHours": 0,
+	  "maxMinutes": 99,
+	  "maxSeconds": 59,
+	  "maxMillis": 999,
+	  "textScoreboardLine": 2,
+	  "textScoreboardStartPos": 32,
+	  "textScoreboardEndPos": 37,
+      "thresholds": [10],
+      "flashZoneThreshold": 10,
+      "flashZonePattern": "400:true,100:false"
+    },
+	{
+      "type": "ScoreTimer",
+      "id": "shotTimer",
+	  "initialVisibility": true,
+	  "gameLinks": ["shotTimer"],
+	  "format": "SS",
+	  "maxHours": 0,
+	  "maxMinutes": 0,
+	  "maxSeconds": 99,
+	  "maxMillis": 999,
+	  "textScoreboardLine": 9,
+	  "textScoreboardStartPos": 39,
+	  "textScoreboardEndPos": 41
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "mainLeft_Horn",
+      "initialVisibility": true,
+	  "gameLinks": ["periodTimer_Horn", "manual_Horn"],
+	  "format": ">",
+	  "textScoreboardLine": 2,
+	  "textScoreboardStartPos": 31,
+	  "textScoreboardEndPos": 32,
+      "pattern": "700:true,300:false,300:true,300:false,300:true,300:false"
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "mainRight_Horn",
+      "initialVisibility": true,
+	  "gameLinks": ["periodTimer_Horn", "manual_Horn"],
+	  "format": "<",
+	  "textScoreboardLine": 2,
+	  "textScoreboardStartPos": 37,
+	  "textScoreboardEndPos": 38,
+      "pattern": "700:true,300:false,300:true,300:false,300:true,300:false"
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "visualLeft_Horn",
+      "initialVisibility": true,
+	  "gameLinks": ["periodTimer_Horn", "manual_Horn"],
+	  "format": ">VL<",
+	  "textScoreboardLine": 9,
+	  "textScoreboardStartPos": 17,
+	  "textScoreboardEndPos": 21,
+      "pattern": "3500:true"
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "visualRight_Horn",
+      "initialVisibility": true,
+	  "gameLinks": ["periodTimer_Horn", "manual_Horn"],
+	  "format": ">VR<",
+	  "textScoreboardLine": 9,
+	  "textScoreboardStartPos": 47,
+	  "textScoreboardEndPos": 51,
+      "pattern": "4000:true"
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "backboardLight_Horn",
+      "initialVisibility": true,
+	  "gameLinks": ["periodTimer_Horn", "manual_Horn"],
+	  "format": "[=== BACKBOARD LIGHTS ===]",
+	  "textScoreboardLine": 11,
+	  "textScoreboardStartPos": 21,
+	  "textScoreboardEndPos": 47,
+      "pattern": "4500:true"
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "shotTimerLeft_Horn",
+      "initialVisibility": true,
+	  "gameLinks": ["shotTimer_Horn"],
+	  "format": ">",
+	  "textScoreboardLine": 9,
+	  "textScoreboardStartPos": 38,
+	  "textScoreboardEndPos": 39,
+      "pattern": "200:true,200:false,200:true,200:false,200:true,200:false"
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "shotTimerRight_Horn",
+      "initialVisibility": true,
+	  "gameLinks": ["shotTimer_Horn"],
+	  "format": "<",
+	  "textScoreboardLine": 9,
+	  "textScoreboardStartPos": 41,
+	  "textScoreboardEndPos": 42,
+      "pattern": "200:true,200:false,200:true,200:false,200:true,200:false"
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "team1Bonus1",
+      "initialVisibility": true,
+	  "gameLinks": ["team1BonusCount"],
+	  "action": "activate",
+	  "condition": "gameLink > 0",
+	  "format": "B",
+	  "textScoreboardLine": 4,
+	  "textScoreboardStartPos": 22,
+	  "textScoreboardEndPos": 23
+    },
+    {
+      "type": "ScoreIndicator",
+      "id": "team1Bonus2",
+      "initialVisibility": true,
+	  "gameLinks": ["team1BonusCount"],
+	  "action": "activate",
+	  "condition": "gameLink > 1",
+	  "format": "B",
+	  "textScoreboardLine": 4,
+	  "textScoreboardStartPos": 20,
+	  "textScoreboardEndPos": 21
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "team2Bonus1",
+      "initialVisibility": true,
+	  "action": "activate",
+	  "gameLinks": ["team2BonusCount"],
+	  "condition": "gameLink > 0",
+	  "format": "B",
+	  "textScoreboardLine": 4,
+	  "textScoreboardStartPos": 46,
+	  "textScoreboardEndPos": 47
+    },
+    {
+      "type": "ScoreIndicator",
+      "id": "team2Bonus2",
+      "initialVisibility": true,
+	  "action": "activate",
+	  "gameLinks": ["team2BonusCount"],
+	  "condition": "gameLink > 1",
+	  "format": "B",
+	  "textScoreboardLine": 4,
+	  "textScoreboardStartPos": 48,
+	  "textScoreboardEndPos": 49
+    },
+	{
+      "type": "ScoreCounter",
+      "id": "periodCount",
+      "gameLinks": ["periodCount"],
+	  "initialVisibility": true,
+	  "format": "#",
+	  "textScoreboardLine": 4,
+	  "textScoreboardStartPos": 37,
+	  "textScoreboardEndPos": 38
+    },
+    {
+      "type": "ScoreCounter",
+      "id": "team1Points",
+      "gameLinks": ["team1Points"],
+	  "initialVisibility": true,
+	  "format": "###",
+	  "textScoreboardLine": 3,
+	  "textScoreboardStartPos": 19,
+	  "textScoreboardEndPos": 22
+    },
+    {
+      "type": "ScoreCounter",
+      "id": "team2Points",
+      "gameLinks": ["team2Points"],
+	  "initialVisibility": true,
+	  "format": "###",
+	  "textScoreboardLine": 3,
+	  "textScoreboardStartPos": 47,
+	  "textScoreboardEndPos": 50
+    },
+	{
+      "type": "ScoreIndicator",
+      "id": "team1Possession",
+      "initialVisibility": true,
+	  "gameLinks": ["team1Possession"],
+	  "format": "<",
+	  "textScoreboardLine": 4,
+	  "textScoreboardStartPos": 18,
+	  "textScoreboardEndPos": 19
+    },
+    {
+      "type": "ScoreIndicator",
+      "id": "team2Possession",
+      "initialVisibility": true,
+	  "gameLinks": ["team2Possession"],
+	  "format": ">",
+	  "textScoreboardLine": 4,
+	  "textScoreboardStartPos": 50,
+	  "textScoreboardEndPos": 51
+    },
+	{
+      "type": "ScoreCounter",
+      "id": "playerNumber",
+      "gameLinks": ["playerNumber"],
+	  "initialVisibility": false,
+	  "format": "##",
+	  "textScoreboardLine": 7,
+	  "textScoreboardStartPos": 31,
+	  "textScoreboardEndPos": 33
+    },
+	{
+      "type": "ScoreCounter",
+      "id": "playerFoul",
+      "gameLinks": ["playerFoul"],
+	  "initialVisibility": false,
+	  "format": "#",
+	  "textScoreboardLine": 7,
+	  "textScoreboardStartPos": 38,
+	  "textScoreboardEndPos": 39
+    },
+	{
+      "type": "ScoreCounter",
+      "id": "team1Fouls",
+      "gameLinks": ["team1Fouls"],
+	  "initialVisibility": true,
+	  "format": "##",
+	  "textScoreboardLine": 7,
+	  "textScoreboardStartPos": 16,
+	  "textScoreboardEndPos": 18
+    },
+	{
+      "type": "ScoreCounter",
+      "id": "team2Fouls",
+      "gameLinks": ["team2Fouls"],
+	  "initialVisibility": true,
+	  "format": "##",
+	  "textScoreboardLine": 7,
+	  "textScoreboardStartPos": 50,
+	  "textScoreboardEndPos": 52
+    },
+	{
+      "type": "ScoreCounter",
+      "id": "team1TimeOuts",
+      "gameLinks": ["team1TimeOuts"],
+	  "initialVisibility": true,
+	  "format": "#",
+	  "textScoreboardLine": 7,
+	  "textScoreboardStartPos": 22,
+	  "textScoreboardEndPos": 23
+    },
+	{
+      "type": "ScoreCounter",
+      "id": "team2TimeOuts",
+      "gameLinks": ["team2TimeOuts"],
+	  "initialVisibility": true,
+	  "format": "#",
+	  "textScoreboardLine": 7,
+	  "textScoreboardStartPos": 46,
+	  "textScoreboardEndPos": 47
+    }
+  ]
 }

@@ -141,6 +141,11 @@ class ScoreTimer implements ScoreElement {
     private boolean allowShift;
     private String constrainWhen; // New field
     private boolean visibility = true;
+    private String displayFormat;
+    private int textScoreboardLine;
+    private int textScoreboardStartPos;
+    private int textScoreboardEndPos;
+    private JsonArray gameLinks;
 
     public ScoreTimer(ScoreEventBus eventBus) {
         this.eventBus = eventBus;
@@ -151,20 +156,24 @@ class ScoreTimer implements ScoreElement {
     @Override
     public void initialize(JsonObject config) {
         this.id = config.get("id").getAsString();
-        this.initialValue = config.get("initialValue").getAsLong(); // Changed from initialSeconds
+        this.initialValue = config.has("initialValue") ? config.get("initialValue").getAsLong() : 0L; // Changed from initialSeconds
         this.currentValue = initialValue;
         updateTimeUnits(initialValue);
-        this.maxHours = 9;
-        this.maxMinutes = 59;
-        this.maxSeconds = 59;
-        this.maxMillis = 999;
         this.isRunning = false;
         this.startTimeStamp = null;
         this.expiredNotified = false;
+        this.maxHours = config.has("maxHours") ? config.get("maxHours").getAsInt() : 9;
+        this.maxMinutes = config.has("maxMinutes") ? config.get("maxMinutes").getAsInt() : 59;
+        this.maxSeconds = config.has("maxSeconds") ? config.get("maxSeconds").getAsInt() : 59;
+        this.maxMillis = config.has("maxMillis") ? config.get("maxMillis").getAsInt() : 999;
         this.isUpCounting = config.has("isUpCounting") ? config.get("isUpCounting").getAsBoolean() : false;
         this.allowShift = config.has("allowShift") ? config.get("allowShift").getAsBoolean() : true;
         this.minValue = config.has("minValue") ? config.get("minValue").getAsLong() : 0L;
-        this.maxValue = config.has("maxValue") ? config.get("maxValue").getAsLong() : 59999990000000L;
+        long derivedMax = this.maxHours * 60L * 60L * 1_000_000_000L;
+        derivedMax = derivedMax + this.maxMinutes * 60L * 1_000_000_000L;
+        derivedMax = derivedMax + this.maxSeconds * 1_000_000_000L;
+        derivedMax = derivedMax + this.maxMillis * 1_000_000L;
+        this.maxValue = config.has("maxValue") ? config.get("maxValue").getAsLong() : derivedMax;
         this.rolloverValue = config.has("rolloverValue") ? config.get("rolloverValue").getAsLong() : 35999990000000L;
         this.canRollUp = config.has("canRollUp") ? config.get("canRollUp").getAsBoolean() : false;
         this.canRollDown = config.has("canRollDown") ? config.get("canRollDown").getAsBoolean() : false;
@@ -178,11 +187,48 @@ class ScoreTimer implements ScoreElement {
         this.flashZonePattern = config.has("flashZonePattern") ? config.get("flashZonePattern").getAsString() : null;
         this.constrainWhen = config.has("constrainWhen") ? config.get("constrainWhen").getAsString() : null;
         this.visibility = config.has("initialVisibility") ? config.get("initialVisibility").getAsBoolean() : true;
+        this.displayFormat = config.has("format") ? config.get("format").getAsString() : "";
+        this.textScoreboardLine = config.has("textScoreboardLine") ? config.get("textScoreboardLine").getAsInt() : 0;
+        this.textScoreboardStartPos = config.has("textScoreboardStartPos") ? config.get("textScoreboardStartPos").getAsInt() : 0;
+        this.textScoreboardEndPos = config.has("textScoreboardEndPos") ? config.get("textScoreboardEndPos").getAsInt() : 0;
+        this.gameLinks = config.has("gameLinks") ? config.get("gameLinks").getAsJsonArray() : null;
 
         enforceConstraints(); // Apply constraints after initialization
     }
 
-    private void enforceConstraints() {
+   public void synchronize(ScoreTimer synchy) {
+        this.initialValue = synchy.initialValue;
+        this.startTimeStamp = synchy.startTimeStamp;
+        this.maxHours = synchy.maxHours;
+        this.maxMinutes = synchy.maxMinutes;
+        this.maxSeconds = synchy.maxSeconds;
+        this.maxMillis = synchy.maxMillis;
+        this.isUpCounting = synchy.isUpCounting;
+        this.allowShift = synchy.allowShift;
+        this.minValue = synchy.minValue;
+        this.maxValue = synchy.maxValue;
+        this.rolloverValue = synchy.rolloverValue;
+        this.canRollUp = synchy.canRollUp;
+        this.canRollDown = synchy.canRollDown;
+        /*
+        this.expiredNotified = synchy.expiredNotified;
+        this.thresholds = synchy.thresholds;
+        this.flashZoneThreshold = synchy.flashZoneThreshold;
+        this.flashZonePattern = synchy.flashZonePattern;
+        this.constrainWhen = synchy.constrainWhen;
+        this.visibility = config.has("initialVisibility") ? config.get("initialVisibility").getAsBoolean() : true;
+        this.displayFormat = config.has("format") ? config.get("format").getAsString() : "";
+        this.textScoreboardLine = config.has("textScoreboardLine") ? config.get("textScoreboardLine").getAsInt() : 0;
+        this.textScoreboardStartPos = config.has("textScoreboardStartPos") ? config.get("textScoreboardStartPos").getAsInt() : 0;
+        this.textScoreboardEndPos = config.has("textScoreboardEndPos") ? config.get("textScoreboardEndPos").getAsInt() : 0;
+        this.gameLinks = config.has("gameLinks") ? config.get("gameLinks").getAsJsonArray() : null;
+        */
+        this.currentValue = synchy.getCurrentValueRaw();
+        updateTimeUnits(this.currentValue);
+        this.isRunning = synchy.isRunning;
+    }
+
+     private void enforceConstraints() {
         if (constrainWhen != null) {
             String[] parts = constrainWhen.split("->");
             if (parts.length == 2) {
@@ -389,6 +435,30 @@ class ScoreTimer implements ScoreElement {
 
     @Override
     public String getDisplayValue() {
+        if (this.displayFormat == null) {
+            return "";
+        } else {
+            if ("MM:SS".equals(this.displayFormat)) {
+                int totalMinutes = this.currentMinutes + this.currentHours * 60;
+                if (totalMinutes > this.maxMinutes) {
+                    totalMinutes = this.currentMinutes;
+                }
+                if (totalMinutes == 0 && this.allowShift) {
+                    return String.format("%2d.%1d ", this.currentSeconds, this.currentMillis / 100);
+                } else {
+                    return String.format("%2d:%02d", totalMinutes, this.currentSeconds);
+                }
+            } else if ("SS".equals(this.displayFormat)) {
+                int totalSeconds = this.currentSeconds + this.currentMinutes * 60;
+                if (totalSeconds > this.maxSeconds) {
+                    totalSeconds = this.currentSeconds;
+                }
+                return String.format("%2d", totalSeconds);
+            } else {
+                return "";
+            }
+        }
+        /*
         long nanos = getCurrentValue();
         long totalSeconds = nanos / 1_000_000_000L;
         if (totalSeconds >= 60) {
@@ -402,7 +472,7 @@ class ScoreTimer implements ScoreElement {
         } else {
             long seconds = totalSeconds;
             return String.format("%02d", seconds);  // No tenths if allowShift is false
-        }
+        }*/
     }
 
     @Override
@@ -460,7 +530,7 @@ class ScoreTimer implements ScoreElement {
     
     public void setHoursMinutesSecondsMillis(int hours, int minutes, int seconds, int millis) {
         System.out.println("you called? hours=" + hours + "  minutes=" + minutes + "  seconds=" + seconds + "  millis=" + millis);
-        System.out.println(maxHours + "   " + maxMinutes + "   " + maxSeconds + "   " + maxMillis);
+        System.out.println(maxHours + "   " + maxMinutes + "   " + maxSeconds + "   " + maxMillis + "  ID" + this.id);
         if (hours <= this.maxHours && minutes <= this.maxMinutes && seconds <= this.maxSeconds && millis <= this.maxMillis) {
             System.out.println("passed the test.");
             this.currentHours = hours;
@@ -482,6 +552,22 @@ class ScoreTimer implements ScoreElement {
     public void setVisibility(boolean value) {
         this.visibility = value;
     }
+    
+    public int getTextScoreboardLine() {
+        return this.textScoreboardLine;
+    }
+    
+    public int getTextScoreboardStartPos() {
+        return this.textScoreboardStartPos;
+    }
+    
+    public int getTextScoreboardEndPos() {
+        return this.textScoreboardEndPos;
+    }
+    
+    public JsonArray getGameLinks() {
+        return this.gameLinks;
+    }
 }
 
 // ScoreIndicator class
@@ -493,15 +579,11 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
     private String pattern;
     private Supplier<String> selectedTimerSupplier; // Added field to track selected timer
     private boolean visibility = false;
-
-    public ScoreIndicator(String id, String observedTimerId, String triggerEvent, String pattern) {
-        this.id = id;
-        this.observedTimerId = observedTimerId;
-        this.triggerEvent = triggerEvent;
-        this.pattern = pattern;
-        this.currentValue = false;
-        this.visibility = false;
-    }
+    private String displayFormat;
+    private int textScoreboardLine;
+    private int textScoreboardStartPos;
+    private int textScoreboardEndPos;
+    private JsonArray gameLinks;
 
     @Override
     public void initialize(JsonObject config) {
@@ -510,7 +592,12 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
         this.observedTimerId = config.has("observedTimerId") ? config.get("observedTimerId").getAsString() : null;
         this.triggerEvent = config.has("triggerEvent") ? config.get("triggerEvent").getAsString() : null;
         this.pattern = config.has("pattern") ? config.get("pattern").getAsString() : null;
-        this.visibility = config.has("initialVisibility") ? config.get("initialVisibility").getAsBoolean() : false;
+        this.visibility = config.has("initialVisibility") ? config.get("initialVisibility").getAsBoolean() : true;
+        this.displayFormat = config.has("format") ? config.get("format").getAsString() : "";
+        this.textScoreboardLine = config.has("textScoreboardLine") ? config.get("textScoreboardLine").getAsInt() : 0;
+        this.textScoreboardStartPos = config.has("textScoreboardStartPos") ? config.get("textScoreboardStartPos").getAsInt() : 0;
+        this.textScoreboardEndPos = config.has("textScoreboardEndPos") ? config.get("textScoreboardEndPos").getAsInt() : 0;
+        this.gameLinks = config.has("gameLinks") ? config.get("gameLinks").getAsJsonArray() : null;
     }
 
     /** Sets the supplier that provides the currently selected timer ID. */
@@ -586,7 +673,7 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
 
     @Override
     public String getDisplayValue() {
-        return currentValue ? "*" : "";
+        return currentValue ? this.displayFormat : " ";
     }
     
     public boolean isBlank() {
@@ -595,6 +682,26 @@ class ScoreIndicator implements ScoreElement, TimerObserver {
     
     public void setIsBlank(boolean value) {
         this.visibility = !value;
+    }
+    
+    public int getTextScoreboardLine() {
+        return this.textScoreboardLine;
+    }
+    
+    public int getTextScoreboardStartPos() {
+        return this.textScoreboardStartPos;
+    }
+    
+    public int getTextScoreboardEndPos() {
+        return this.textScoreboardEndPos;
+    }
+    
+    public JsonArray getGameLinks() {
+        return this.gameLinks;
+    }
+    
+    public String getObservedTimerId() {
+        return this.observedTimerId;
     }
 }
 
@@ -610,21 +717,47 @@ class ScoreCounter implements ScoreElement {
     private boolean visibility = true;
     private boolean leadingZeroTricks = false;
     private boolean showLeadingZero = false;
+    private String displayFormat;
+    private int textScoreboardLine;
+    private int textScoreboardStartPos;
+    private int textScoreboardEndPos;
+    private JsonArray gameLinks;
 
     @Override
     public void initialize(JsonObject config) {
         this.id = config.get("id").getAsString();
-        this.initialValue = config.get("initialValue").getAsInt();
-        this.minValue = config.get("minValue").getAsInt();
-        this.maxValue = config.get("maxValue").getAsInt();
+        this.initialValue = config.has("initialValue") ? config.get("initialValue").getAsInt() : 0;
+        this.minValue = config.has("minValue") ? config.get("minValue").getAsInt() : 0;
+        this.maxValue = config.has("maxValue") ? config.get("maxValue").getAsInt() : 0;
         this.currentValue = initialValue;
         this.canRollUp = config.has("canRollUp") ? config.get("canRollUp").getAsBoolean() : false;
         this.canRollDown = config.has("canRollDown") ? config.get("canRollDown").getAsBoolean() : false;
-        this.rolloverValue = config.has("rolloverValue") ? config.get("rolloverValue").getAsInt() : null;
+        this.rolloverValue = 0;
+        if (this.canRollUp) {
+            if (config.has("rolloverValue")) {
+                this.rolloverValue = config.get("rolloverValue").getAsInt();
+            } else if (this.maxValue != 0) {
+                this.rolloverValue = this.maxValue;
+            } else {
+                this.canRollUp = false;
+            }
+        }
+        if (this.canRollDown) {
+            if (config.has("rolloverValue")) {
+                this.rolloverValue = config.get("rolloverValue").getAsInt();
+            } else {
+                this.rolloverValue = this.minValue;
+            }
+        }
         this.visibility = config.has("initialVisibility") ? config.get("initialVisibility").getAsBoolean() : true;
         this.leadingZeroTricks = config.has("leadingZeroTricks") ? config.get("leadingZeroTricks").getAsBoolean() : false;
         this.showLeadingZero = config.has("showLeadingZero") ? config.get("showLeadingZero").getAsBoolean() : false;
-    }
+        this.displayFormat = config.has("format") ? config.get("format").getAsString() : "";
+        this.textScoreboardLine = config.has("textScoreboardLine") ? config.get("textScoreboardLine").getAsInt() : 0;
+        this.textScoreboardStartPos = config.has("textScoreboardStartPos") ? config.get("textScoreboardStartPos").getAsInt() : 0;
+        this.textScoreboardEndPos = config.has("textScoreboardEndPos") ? config.get("textScoreboardEndPos").getAsInt() : 0;
+        this.gameLinks = config.has("gameLinks") ? config.get("gameLinks").getAsJsonArray() : null;
+    } 
 
     @Override
     public String getId() {
@@ -635,7 +768,7 @@ class ScoreCounter implements ScoreElement {
     public void reset() {
         currentValue = initialValue;
     }
-
+    
     public void increment(int amount) {
         int newValue = currentValue + amount;
         if (canRollUp && rolloverValue != null && currentValue <= rolloverValue && newValue > rolloverValue) {
@@ -716,14 +849,34 @@ class ScoreCounter implements ScoreElement {
     public void setShowLeadingZero(boolean value) {
         this.showLeadingZero = value;
     }
+    
+    public int getTextScoreboardLine() {
+        return this.textScoreboardLine;
+    }
+    
+    public int getTextScoreboardStartPos() {
+        return this.textScoreboardStartPos;
+    }
+    
+    public int getTextScoreboardEndPos() {
+        return this.textScoreboardEndPos;
+    }
+    
+    public JsonArray getGameLinks() {
+        return this.gameLinks;
+    }
 }
 
 // RuleEngine class
 class RuleEngine {
     private ScoreEventBus eventBus = new ScoreEventBus();
-    private Map<String, ScoreElement> elements = new HashMap<>();
+    private Map<String, ScoreElement> gameElementsMap = new HashMap<>();
+    private Map<String, ScoreElement> displayElementsMap = new HashMap<>();
     private List<String> timerIds = new ArrayList<>();
-    private JsonObject uiConfig;
+    //private JsonObject uiConfig;
+    private JsonArray gameElementsArray;
+    private JsonObject controllerConfig;
+    private JsonArray displayConfigArray;
 
     public RuleEngine(String ruleFilePath) {
         loadRules(ruleFilePath);
@@ -731,48 +884,78 @@ class RuleEngine {
 
     private void loadRules(String ruleFilePath) {
         try {
+            // First, we load the entire Rules Set JSON file into json.
             JsonObject json = new Gson().fromJson(new FileReader(ruleFilePath), JsonObject.class);
             if (json == null) {
                 System.err.println("Failed to parse JSON: JSON is null");
                 return;
             }
-            uiConfig = json.has("uiConfig") ? json.getAsJsonObject("uiConfig") : new JsonObject();
-            JsonArray elementsArray = json.getAsJsonArray("elements");
-            if (elementsArray == null) {
-                System.err.println("No 'elements' array in JSON");
+            //uiConfig = json.has("uiConfig") ? json.getAsJsonObject("uiConfig") : new JsonObject();
+            controllerConfig = json.has("Controller-Config") ? json.getAsJsonObject("Controller-Config") : new JsonObject();
+            //JsonArray elementsArray = json.getAsJsonArray("elements");
+            gameElementsArray = json.getAsJsonArray("Game-Elements");
+            displayConfigArray = json.getAsJsonArray("Display-Config");
+            if (gameElementsArray == null) {
+                System.err.println("No 'Game-Elements' array in JSON");
                 return;
             }
-            for (JsonElement element : elementsArray) {
-                JsonObject config = element.getAsJsonObject();
-                String type = config.get("type").getAsString();
+            
+            for (JsonElement element : gameElementsArray) {
+                JsonObject gameElementConfig = element.getAsJsonObject();
+                String gameElementType = gameElementConfig.get("type").getAsString();
                 ScoreElement scoreElement;
 
-                if ("ScoreTimer".equals(type)) {
+                if ("ScoreTimer".equals(gameElementType)) {
                     scoreElement = new ScoreTimer(eventBus);
-                    scoreElement.initialize(config);
-                    elements.put(scoreElement.getId(), scoreElement);
-                    timerIds.add(scoreElement.getId()); // Add timer ID to list
-                } else if ("ScoreIndicator".equals(type)) {
-                    String indID = config.get("id").getAsString();
-                    String indObserverID = config.has("observedTimerId") ? config.get("observedTimerId").getAsString() : null;
-                    String indTriggerEvent = config.has("triggerEvent") ? config.get("triggerEvent").getAsString() : null;
-                    String indPattern = config.has("pattern") ? config.get("pattern").getAsString() : null;
-                    scoreElement = new ScoreIndicator(indID, indObserverID, indTriggerEvent, indPattern);
-                    scoreElement.initialize(config);
-                    elements.put(scoreElement.getId(), scoreElement);
+                    scoreElement.initialize(gameElementConfig);
+                    gameElementsMap.put(scoreElement.getId(), scoreElement);
+                    //timerIds.add(scoreElement.getId()); // Add timer ID to list
+                } else if ("ScoreCounter".equals(gameElementType)) {
+                    scoreElement = new ScoreCounter();
+                    scoreElement.initialize(gameElementConfig);
+                    gameElementsMap.put(scoreElement.getId(), scoreElement);
+                } else if ("ScoreIndicator".equals(gameElementType)) {
+                    scoreElement = new ScoreIndicator();
+                    scoreElement.initialize(gameElementConfig);
+                    gameElementsMap.put(scoreElement.getId(), scoreElement);
                     ScoreIndicator indicator = (ScoreIndicator) scoreElement;
-                    String timerId = config.has("observedTimerId") ? config.get("observedTimerId").getAsString() : null;
+                    String timerId = indicator.getObservedTimerId();
                     if (timerId != null) {
                         eventBus.registerTimerObserver(timerId, indicator);
                     }
-                } else if ("ScoreCounter".equals(type)) {
-                    scoreElement = new ScoreCounter();
-                    scoreElement.initialize(config);
-                    elements.put(scoreElement.getId(), scoreElement);
-                } else {
-                    continue;
-                }
+                } 
             }
+            
+            if (displayConfigArray == null) {
+                System.err.println("Missing 'Display-Config' from Rule Set JSON");
+                return;
+            }
+            for (JsonElement displayElement : displayConfigArray) {
+                JsonObject displayElementConfig = displayElement.getAsJsonObject();
+                String elementType = displayElementConfig.get("type").getAsString();
+                ScoreElement scoreElement;
+
+                if ("ScoreTimer".equals(elementType)) {
+                    scoreElement = new ScoreTimer(eventBus);
+                    scoreElement.initialize(displayElementConfig);
+                    displayElementsMap.put(scoreElement.getId(), scoreElement);
+                    //timerIds.add(scoreElement.getId()); // Add timer ID to list
+                } else if ("ScoreCounter".equals(elementType)) {
+                    scoreElement = new ScoreCounter();
+                    scoreElement.initialize(displayElementConfig);
+                    displayElementsMap.put(scoreElement.getId(), scoreElement);
+                } else if ("ScoreIndicator".equals(elementType)) {
+                    scoreElement = new ScoreIndicator();
+                    scoreElement.initialize(displayElementConfig);
+                    displayElementsMap.put(scoreElement.getId(), scoreElement);
+                    ScoreIndicator indicator = (ScoreIndicator) scoreElement;
+                    String timerId = indicator.getObservedTimerId();
+                    if (timerId != null) {
+                        eventBus.registerTimerObserver(timerId, indicator);
+                    }
+                } 
+            }
+            
             System.out.println("RuleEngine loaded, timerIds: " + timerIds); // Debug output
         } catch (Exception e) {
             System.err.println("Error loading rules from " + ruleFilePath + ":");
@@ -780,19 +963,27 @@ class RuleEngine {
         }
     }
 
-    public ScoreElement getElement(String id) {
-        return elements.get(id);
+    public ScoreElement getGameElement(String id) {
+        return gameElementsMap.get(id);
     }
 
-    public Collection<ScoreElement> getElements() {
-        return elements.values();
+    public Collection<ScoreElement> getGameElementsMap() {
+        return gameElementsMap.values();
+    }
+    
+    public ScoreElement getDisplayElement(String id) {
+        return displayElementsMap.get(id);
+    }
+
+    public Collection<ScoreElement> getDisplayElementsMap() {
+        return displayElementsMap.values();
     }
     /*
     public List<String> getTimerIds() {
         return timerIds;
     }*/
     
-    public JsonObject getUiConfig() {
-        return uiConfig;
+    public JsonObject getControllerConfig() {
+        return controllerConfig;
     }
 }
